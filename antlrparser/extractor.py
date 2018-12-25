@@ -76,7 +76,7 @@ class FileProcessor:
         self.errored = []
         self.default_schema = DEFAULT_SCHEMA
 
-    def parse_dir(self, dir_path, delimiter=DELIMITER, topdown=False):
+    def parse_dir(self, dir_path, topdown=False):
 
         """Walks through a given directory, parses SQL procedures in all SQL files found,
         appends Procedure objects created to self.results.
@@ -86,23 +86,27 @@ class FileProcessor:
         :param topdown: optional parameter controlling the directory "walking" behavior, defaults to False
         """
 
-        PROCEDURE_REGEX = re.compile(f"CREATE\s+?PROCEDURE.*?{delimiter}", re.DOTALL | re.IGNORECASE)
-
         # Walk through directory
         for root, dirs, files in os.walk(dir_path, topdown=topdown):
             # Loop on .sql files
             for name in files:
                 if name.endswith('.sql'):
                     path = f'{root}/{name}'
-                    with open(path, 'r') as file:
-                        # Grammar is case-sensitive. Input has to be converted
-                        # to upper case before parsing
-                        input = fmt(file.read().upper(), strip_comments=True).strip()
+                    self.parse_file(path)
 
-                        # Find all CREATE PROCEDURE statements and parse them
-                        procedures = re.findall(PROCEDURE_REGEX, input)
-                        for proc in procedures:
-                            self.parse_procedure(path, proc)
+    def parse_file(self, path):
+
+        PROCEDURE_REGEX = re.compile(f"CREATE\s+?PROCEDURE.*?{DELIMITER}", re.DOTALL | re.IGNORECASE)
+
+        with open(path, 'r') as file:
+            # Grammar is case-sensitive. Input has to be converted
+            # to upper case before parsing
+            input = fmt(file.read().upper(), strip_comments=True).strip()
+
+            # Find all CREATE PROCEDURE statements and parse them
+            procedures = re.findall(PROCEDURE_REGEX, input)
+            for proc in procedures:
+                self.parse_procedure(path, proc)
 
     def parse_object_name(self, name):
 
