@@ -1,0 +1,15 @@
+# IDE files
+.idea/*
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# Virtual env
+venv/
+
+# OS generated files
+.DS_Store
+
+# Test cache
+.cache/
+.pytest_cache/
