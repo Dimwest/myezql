@@ -1,15 +1,16 @@
 import ujson
 import itertools
+from sql.objects import Procedure
+from typing import List
 
 
-def to_json(results, path, overwrite=True):
+def to_json(results: List[Procedure], path: str) -> None:
 
     """
     Convenience function exporting antlrparser results to a JSON file at the path specified as utils.
 
     :param results: list of results from antlrparser.utils.parse_dir function
     :param path: target directory storing JSON file
-    :param overwrite: overwrites existing file if True, creates a new one if False
     """
 
     to_dict = dict()
@@ -21,7 +22,7 @@ def to_json(results, path, overwrite=True):
         ujson.dump(to_dict, fp, indent=4, sort_keys=True)
 
 
-def summarize(path):
+def summarize(path: str) -> None:
 
     """
     Function analyzing JSON file generated and pretty-printing statistics about execution.

@@ -3,7 +3,7 @@ import ujson
 
 class Mermaid:
 
-    def __init__(self, path):
+    def __init__(self, path: str):
 
         self.graph_type = "graph TD;"
         self.tables_flow = []
@@ -15,7 +15,7 @@ class Mermaid:
         self.tables_relations()
         self.functions_relations()
 
-    def tables_relations(self):
+    def tables_relations(self) -> None:
 
         for p in self.results:
             for q in self.results[p]['queries']:
@@ -29,7 +29,7 @@ class Mermaid:
         self.tables_flow.insert(0, self.graph_type)
         self.tables_flow = '\n'.join(self.tables_flow)
 
-    def functions_relations(self):
+    def functions_relations(self) -> None:
 
         for p in self.results:
             self.functions_flow.append(f"{self.results[p]['name']}(({self.results[p]['name']}));")
@@ -42,15 +42,5 @@ class Mermaid:
         self.functions_flow = list(set(self.functions_flow))
         self.functions_flow.insert(0, self.graph_type)
         self.functions_flow = '\n'.join(self.functions_flow)
-
-    def tables_parents(self, name):
-
-        queries = []
-        pass
-
-    def tables_children(self, name):
-
-        queries = []
-        pass
 
 

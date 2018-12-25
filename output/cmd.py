@@ -1,8 +1,10 @@
 from colorama import Fore, Style
 from config.config import ACCEPTED_DML_TYPES
+from typing import List
+from sql.objects import Procedure
 
 
-def beautify(results):
+def beautify(results: List[Procedure]) -> None:
     """
     Convenience function displaying the parsing results in a colored and human-readable format using
     colorama (as it works on all platforms)

@@ -7,6 +7,7 @@ from sql.objects import Query, Procedure, Table
 from antlr4 import *
 from antlrparser.lexer import MySqlLexer
 from antlrparser.parser import MySqlParser
+from typing import Tuple, List, Optional
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -76,9 +77,10 @@ class FileProcessor:
         self.errored = []
         self.default_schema = DEFAULT_SCHEMA
 
-    def parse_dir(self, dir_path, topdown=False):
+    def parse_dir(self, dir_path: str) -> None:
 
-        """Walks through a given directory, parses SQL procedures in all SQL files found,
+        """
+        Walks through a given directory, parses SQL procedures in all SQL files found,
         appends Procedure objects created to self.results.
 
         :param dir_path: path to the target directory
@@ -87,14 +89,20 @@ class FileProcessor:
         """
 
         # Walk through directory
-        for root, dirs, files in os.walk(dir_path, topdown=topdown):
+        for root, dirs, files in os.walk(dir_path, topdown=False):
             # Loop on .sql files
             for name in files:
                 if name.endswith('.sql'):
                     path = f'{root}/{name}'
                     self.parse_file(path)
 
-    def parse_file(self, path):
+    def parse_file(self, path: str) -> None:
+
+        """
+        Finds and parses all procedures in SQL file.
+
+        :param path: file path
+        """
 
         PROCEDURE_REGEX = re.compile(f"CREATE\s+?PROCEDURE.*?{DELIMITER}", re.DOTALL | re.IGNORECASE)
 
@@ -108,7 +116,7 @@ class FileProcessor:
             for proc in procedures:
                 self.parse_procedure(path, proc)
 
-    def parse_object_name(self, name):
+    def parse_object_name(self, name: str) -> Tuple[str, str]:
 
         """
         Separates name and schema from a raw database object name.
@@ -129,7 +137,7 @@ class FileProcessor:
 
         return schema, name
 
-    def get_procedure_name(self, p):
+    def get_procedure_name(self, p: str) -> Tuple[str, str]:
 
         """
         Gets the procedure name from the procedure body.
@@ -143,7 +151,7 @@ class FileProcessor:
         schema, name = self.parse_object_name(name)
         return schema, name
 
-    def parse_procedure(self, path, p):
+    def parse_procedure(self, path: str, p: str) -> None:
 
         """
         Gets all configured DML statements inside a procedure body, parses them,
@@ -170,7 +178,7 @@ class FileProcessor:
 
         self.results.append(proc)
 
-    def parse_statement(self, dmltype, s, mapper):
+    def parse_statement(self, dmltype: str, s: str, mapper: Mapper) -> Query:
 
         """
         Cleans DML statement, creates parsing objects, and returns a Query object.
@@ -192,7 +200,7 @@ class FileProcessor:
         r = mapper.mapper[dmltype]['extractor'](tree, dmltype)
         return r
 
-    def get_updated_columns(self, tree):
+    def get_updated_columns(self, tree: ParserRuleContext) -> List[str]:
 
         """
         Loops recursively over AST children and gathers all the updated columns.
@@ -211,7 +219,7 @@ class FileProcessor:
 
         return cols
 
-    def get_inserted_columns(self, tree):
+    def get_inserted_columns(self, tree: ParserRuleContext) -> List[str]:
 
         """
         Loops recursively over AST children and gathers all the inserted columns.
@@ -228,7 +236,7 @@ class FileProcessor:
         target_columns = []
         return target_columns
 
-    def parse_update(self, tree, dmltype):
+    def parse_update(self, tree: ParserRuleContext, dmltype: str) -> Optional[Query]:
 
         """
         Parses target table, source table(s) and target columns from
@@ -248,7 +256,7 @@ class FileProcessor:
         if q.target_table and q.from_table:
             return q
 
-    def get_inserted_tables(self, tree):
+    def get_inserted_tables(self, tree: ParserRuleContext) -> Optional[List[Table]]:
 
         """
         Gets all source tables from an INSERT statement.
@@ -261,7 +269,7 @@ class FileProcessor:
             if isinstance(child, MySqlParser.InsertStatementValueContext):
                 return self.get_source_tables(child)
 
-    def parse_insert(self, tree, dmltype):
+    def parse_insert(self, tree: ParserRuleContext, dmltype: str) -> Query:
 
         """
         Parses target table, source table(s) and target columns from
@@ -279,7 +287,7 @@ class FileProcessor:
 
         return q
 
-    def get_delete_table(self, tree):
+    def get_delete_table(self, tree: ParserRuleContext) -> Optional[List[Table]]:
 
         """
         Gets the table name from a DELETE statement.
@@ -292,7 +300,7 @@ class FileProcessor:
             if isinstance(child, MySqlParser.DeleteStatementValueContext):
                 return self.get_source_tables(child)
 
-    def parse_delete(self, tree, dmltype):
+    def parse_delete(self, tree: ParserRuleContext, dmltype: str) -> Query:
 
         """
         Parses the target table from a DELETE statement
@@ -306,7 +314,7 @@ class FileProcessor:
 
         return q
 
-    def cleanup_statement(self, s, mapper):
+    def cleanup_statement(self, s: str, mapper: Mapper) -> str:
 
         """
         Iterates over a Mapper object's cleanup_regexes dict to replace eventual edge cases in
@@ -323,7 +331,7 @@ class FileProcessor:
             s = re.sub(k, v, s)
         return s
 
-    def get_source_tables(self, tree):
+    def get_source_tables(self, tree: ParserRuleContext) -> List[Table]:
 
         """
         Collects recursively table names in FROM and JOIN clauses in a statement.
@@ -343,7 +351,7 @@ class FileProcessor:
 
         return tables
 
-    def get_first_table_name(self, tree):
+    def get_first_table_name(self, tree: ParserRuleContext) -> Table:
 
         """
         Walks recursively to the first table name found in a statement AST and returns it.
@@ -361,7 +369,7 @@ class FileProcessor:
             elif not (isinstance(c, TerminalNode) or isinstance(c, MySqlParser.JoinPartContext)):
                 return self.get_first_table_name(c)
 
-    def get_tables_names(self, tree):
+    def get_tables_names(self, tree: ParserRuleContext) -> List[Table]:
 
         """
         Gets all table names inside a tree, appends them to a list of table names and returns it
