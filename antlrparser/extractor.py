@@ -249,7 +249,7 @@ class FileProcessor:
 
         q = Query(operation=dmltype)
 
-        q.target_table = self.get_first_table_name(tree)
+        q.target_table = self.get_first_table(tree)
         q.from_table = self.get_source_tables(tree)
         q.target_columns = self.get_updated_columns(tree)
 
@@ -281,7 +281,7 @@ class FileProcessor:
         """
 
         q = Query(operation=dmltype)
-        q.target_table = self.get_first_table_name(tree)
+        q.target_table = self.get_first_table(tree)
         q.from_table = self.get_inserted_tables(tree)
         q.target_columns = self.get_inserted_columns(tree)
 
@@ -310,7 +310,7 @@ class FileProcessor:
         """
 
         q = Query(operation=dmltype)
-        q.target_table = self.get_first_table_name(tree)
+        q.target_table = self.get_first_table(tree)
 
         return q
 
@@ -345,13 +345,13 @@ class FileProcessor:
         for c in tree.getChildren():
 
             if isinstance(c, MySqlParser.JoinPartContext) or isinstance(c, MySqlParser.FromClauseContext):
-                tables.extend(self.get_tables_names(c))
+                tables.extend(self.get_all_tables(c))
             elif not (isinstance(c, TerminalNode) or isinstance(c, ErrorNode)):
                 tables.extend(self.get_source_tables(c))
 
         return tables
 
-    def get_first_table_name(self, tree: ParserRuleContext) -> Table:
+    def get_first_table(self, tree: ParserRuleContext) -> Table:
 
         """
         Walks recursively to the first table name found in a statement AST and returns it.
@@ -367,9 +367,9 @@ class FileProcessor:
                 t = Table(name, schema)
                 return t
             elif not (isinstance(c, TerminalNode) or isinstance(c, MySqlParser.JoinPartContext)):
-                return self.get_first_table_name(c)
+                return self.get_first_table(c)
 
-    def get_tables_names(self, tree: ParserRuleContext) -> List[Table]:
+    def get_all_tables(self, tree: ParserRuleContext) -> List[Table]:
 
         """
         Gets all table names inside a tree, appends them to a list of table names and returns it
@@ -385,5 +385,5 @@ class FileProcessor:
                 t = Table(name, schema)
                 tables.append(t)
             elif not (isinstance(child, TerminalNode) or isinstance(child, ErrorNode)):
-                tables.extend(self.get_tables_names(child))
+                tables.extend(self.get_all_tables(child))
         return tables
