@@ -3,8 +3,9 @@ Python CLI tool parsing MySQL procedures
 
 ## To-do:
 - [x] Add first draft
-- [ ] Add type hints
-- [ ] Split FROM and JOIN tables
+- [x] Add type hints
+- [x] Split FROM and JOIN tables
+- [ ] Add unit and end-to-end testing
 - [ ] Rethink "replace" logic for faulty keywords
 - [ ] Move config to .yml format
 - [ ] Refactor redundant functions in processor logic, move as much as possible to utils
