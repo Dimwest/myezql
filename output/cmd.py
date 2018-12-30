@@ -27,7 +27,10 @@ def beautify(results: List[Procedure]) -> None:
                     for f in q.from_table:
                         msg += f'{Fore.CYAN}                  ' \
                                f'. {Fore.BLUE}FROM{Fore.CYAN} {f.name}{Style.RESET_ALL}\n'
-
+                if q.join_table:
+                    for f in q.join_table:
+                        msg += f'{Fore.CYAN}                  ' \
+                               f'. {Fore.BLUE}JOIN{Fore.CYAN} {f.name}{Style.RESET_ALL}\n'
             msg += f'. {Fore.BLUE}Columns --> {Fore.CYAN} {q.target_columns}{Style.RESET_ALL}\n\n'
 
     print(

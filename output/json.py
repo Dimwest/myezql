@@ -38,7 +38,7 @@ def summarize(path: str) -> None:
     queries = list(itertools.chain.from_iterable(queries))
 
     has_target = len([x for x in queries if x.get('target_table')])
-    has_source = len([x for x in queries if x.get('from_table')])
+    has_source = len([x for x in queries if x.get('from_table') or x.get('join_table')])
     has_columns = len([x for x in queries if x.get('target_columns')])
     n_dmls = {q['operation']: 0 for q in queries}
     for q in queries:
