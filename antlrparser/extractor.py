@@ -149,6 +149,7 @@ class FileProcessor:
         NAME_REGEX = re.compile(f"(?<=CREATE\sPROCEDURE\s)(?:IF\s+(NOT\s+)?EXISTS\s+)?([a-zA-Z.]+)", re.IGNORECASE)
         name = re.search(NAME_REGEX, p).group().lower()
         schema, name = self.parse_object_name(name)
+        print('\n', '##############', schema, name, '\n')
         return schema, name
 
     def parse_procedure(self, path: str, p: str) -> None:
@@ -249,14 +250,16 @@ class FileProcessor:
 
         q = Query(operation=dmltype)
 
-        q.target_table = self.get_first_table(tree)
-        q.from_table = self.get_source_tables(tree)
+        q.target_table = self.get_target_table(tree)
+        q.join_table = self.get_source_tables_update(tree)
         q.target_columns = self.get_updated_columns(tree)
 
-        if q.target_table and q.from_table:
+        if q.target_table and q.join_table:
+            msg = {'join': [x.name for x in q.join_table if x]}
+            logger.info(f"UPDATE: {msg}")
             return q
 
-    def get_inserted_tables(self, tree: ParserRuleContext) -> Optional[List[Table]]:
+    def get_inserted_tables(self, tree: ParserRuleContext) -> Tuple[List[Table], List[Table]]:
 
         """
         Gets all source tables from an INSERT statement.
@@ -267,7 +270,11 @@ class FileProcessor:
 
         for child in tree.getChildren():
             if isinstance(child, MySqlParser.InsertStatementValueContext):
-                return self.get_source_tables(child)
+                from_table = self.get_source_tables_insert(child, 'from')
+                join_table = self.get_source_tables_insert(child, 'join')
+                msg = {'from': [x.name for x in from_table if x], 'join': [x.name for x in join_table if x]}
+                logger.info(f"INSERT/REPLACE: {msg}")
+                return from_table, join_table
 
     def parse_insert(self, tree: ParserRuleContext, dmltype: str) -> Query:
 
@@ -281,8 +288,8 @@ class FileProcessor:
         """
 
         q = Query(operation=dmltype)
-        q.target_table = self.get_first_table(tree)
-        q.from_table = self.get_inserted_tables(tree)
+        q.target_table = self.get_target_table(tree)
+        q.from_table, q.join_table = self.get_inserted_tables(tree)
         q.target_columns = self.get_inserted_columns(tree)
 
         return q
@@ -298,7 +305,7 @@ class FileProcessor:
 
         for child in tree.getChildren():
             if isinstance(child, MySqlParser.DeleteStatementValueContext):
-                return self.get_source_tables(child)
+                return self.get_source_tables_insert(child, 'from')
 
     def parse_delete(self, tree: ParserRuleContext, dmltype: str) -> Query:
 
@@ -310,7 +317,7 @@ class FileProcessor:
         """
 
         q = Query(operation=dmltype)
-        q.target_table = self.get_first_table(tree)
+        q.target_table = self.get_target_table(tree)
 
         return q
 
@@ -331,11 +338,10 @@ class FileProcessor:
             s = re.sub(k, v, s)
         return s
 
-    def get_source_tables(self, tree: ParserRuleContext) -> List[Table]:
+    def get_source_tables_update(self, tree: ParserRuleContext) -> List[Table]:
 
         """
-        Collects recursively table names in FROM and JOIN clauses in a statement.
-
+        Collects recursively table names in JOIN clauses of an update statement.
         :param tree: AST object parsed
         :return: list of source tables
         """
@@ -343,21 +349,49 @@ class FileProcessor:
         tables = []
 
         for c in tree.getChildren():
-
-            if isinstance(c, MySqlParser.JoinPartContext) or isinstance(c, MySqlParser.FromClauseContext):
+            if isinstance(c, MySqlParser.JoinPartContext):
                 tables.extend(self.get_all_tables(c))
             elif not (isinstance(c, TerminalNode) or isinstance(c, ErrorNode)):
-                tables.extend(self.get_source_tables(c))
+                tables.extend(self.get_source_tables_update(c))
 
         return tables
 
-    def get_first_table(self, tree: ParserRuleContext) -> Table:
+    def get_source_tables_insert(self, tree: ParserRuleContext, clause: str) -> List[Table]:
+
+        """
+        Collects recursively table names in FROM and JOIN clauses in insert/replace statement.
+
+        :param tree: AST object parsed
+        :param clause: clause type, must be one of ('from', 'join')
+        :return: list of source tables
+        """
+
+        assert clause in ('from', 'join'), f"variable clause must be one of ('from', 'join')"
+
+        tables = []
+
+        for c in tree.getChildren():
+            if isinstance(c, MySqlParser.FromClauseContext):
+                froms = c.tableSources()
+                for i in froms.tableSource():
+                    if clause == 'from':
+                        f = i.tableSourceItem()
+                        tables.extend(self.get_all_tables(f))
+                    else:
+                        f = i.joinPart()
+                        for x in f:
+                            tables.extend(self.get_all_tables(x))
+            elif not (isinstance(c, TerminalNode) or isinstance(c, ErrorNode)):
+                tables.extend(self.get_source_tables_insert(c, clause))
+        return tables
+
+    def get_target_table(self, tree: ParserRuleContext) -> Table:
 
         """
         Walks recursively to the first table name found in a statement AST and returns it.
 
         :param tree: AST object parsed
-        :return: table name string
+        :return: Table object
         """
 
         for c in tree.getChildren():
@@ -366,8 +400,8 @@ class FileProcessor:
                 schema, name = self.parse_object_name(c.getText().lower())
                 t = Table(name, schema)
                 return t
-            elif not (isinstance(c, TerminalNode) or isinstance(c, MySqlParser.JoinPartContext)):
-                return self.get_first_table(c)
+            elif not (isinstance(c, TerminalNode) or isinstance(c, ErrorNode)):
+                return self.get_target_table(c)
 
     def get_all_tables(self, tree: ParserRuleContext) -> List[Table]:
 
@@ -384,6 +418,9 @@ class FileProcessor:
                 schema, name = self.parse_object_name(child.getText().lower())
                 t = Table(name, schema)
                 tables.append(t)
+            elif isinstance(child, MySqlParser.QueryExpressionContext):
+                child = child.querySpecification()
+                tables.extend(self.get_all_tables(child))
             elif not (isinstance(child, TerminalNode) or isinstance(child, ErrorNode)):
                 tables.extend(self.get_all_tables(child))
         return tables
