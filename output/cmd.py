@@ -1,8 +1,10 @@
 from colorama import Fore, Style
 from config.config import ACCEPTED_DML_TYPES
+from typing import List
+from sql.objects import Procedure
 
 
-def beautify(results):
+def beautify(results: List[Procedure]) -> None:
     """
     Convenience function displaying the parsing results in a colored and human-readable format using
     colorama (as it works on all platforms)
@@ -25,7 +27,10 @@ def beautify(results):
                     for f in q.from_table:
                         msg += f'{Fore.CYAN}                  ' \
                                f'. {Fore.BLUE}FROM{Fore.CYAN} {f.name}{Style.RESET_ALL}\n'
-
+                if q.join_table:
+                    for f in q.join_table:
+                        msg += f'{Fore.CYAN}                  ' \
+                               f'. {Fore.BLUE}JOIN{Fore.CYAN} {f.name}{Style.RESET_ALL}\n'
             msg += f'. {Fore.BLUE}Columns --> {Fore.CYAN} {q.target_columns}{Style.RESET_ALL}\n\n'
 
     print(
