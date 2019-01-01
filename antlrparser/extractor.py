@@ -32,11 +32,6 @@ class Mapper:
              'DELETE': re.compile('DELETE\s+?FROM.*?;',
                                   re.DOTALL | re.IGNORECASE)}
 
-        self.cleanup_regexes = {
-            re.compile('ON\s+DUPLICATE\s+KEY\s+UPDATE.*?;',
-                       re.DOTALL | re.IGNORECASE): ';',
-            re.compile('INSTALL'): 'INST'}
-
         self.methods = None
         self.parser = None
         self.extractors = None
