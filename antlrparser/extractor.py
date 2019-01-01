@@ -113,6 +113,8 @@ class FileProcessor:
         PROCEDURE_REGEX = re.compile(f'CREATE\s+?PROCEDURE.*?{DELIMITER}',
                                      re.DOTALL | re.IGNORECASE)
 
+        print(path)
+
         with open(path, 'r') as file:
             # Grammar is case-sensitive. Input has to be converted
             # to upper case before parsing
@@ -199,7 +201,6 @@ class FileProcessor:
         :return: Query object containing the statement information
         """
 
-        s = self.cleanup_statement(s, mapper)
         input = InputStream(s)
         lexer = MySqlLexer(input)
         stream = CommonTokenStream(lexer)
@@ -336,24 +337,6 @@ class FileProcessor:
         q.target_table = self.get_target_table(tree)
 
         return q
-
-    def cleanup_statement(self, s: str, mapper: Mapper) -> str:
-
-        """
-        Iterates over a Mapper object's cleanup_regexes dict to replace
-        eventual edge cases in a statement body, e.g. keywords contained
-        in a table name.
-
-        :param s: string to replace into
-        :param mapper: Mapper object
-        :return: new string value
-        """
-
-        # TODO -> Move to utils.utils
-
-        for k, v in mapper.cleanup_regexes.items():
-            s = re.sub(k, v, s)
-        return s
 
     def get_source_tables_update(self, tree: ParserRuleContext) \
             -> List[Table]:
