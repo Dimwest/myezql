@@ -7,6 +7,7 @@ from config.config import DEFAULT_SCHEMA
 procedure_path = './tests/resources/procedure.sql'
 insert_path = './tests/resources/insert.sql'
 update_path = './tests/resources/update.sql'
+delete_path = './tests/resources/delete.sql'
 
 # NB: Antlr grammar is case-sensitive. Input has to be upper case.
 # Open and upper case test procedure file
@@ -21,6 +22,9 @@ with open(insert_path, 'r') as file:
 with open(update_path, 'r') as file:
     TEST_UPDATE_STATEMENT = fmt(file.read().upper(), strip_comments=True).strip()
 
+# Open and upper case test delete statement
+with open(delete_path, 'r') as file:
+    TEST_DELETE_STATEMENT = fmt(file.read().upper(), strip_comments=True).strip()
 
 INSERT_EXPECTED = Query(procedure='testproc',
                         operation='INSERT',
@@ -36,10 +40,14 @@ UPDATE_EXPECTED = Query(procedure='testproc',
                         target_table=Table(name='src_tab_8', schema=DEFAULT_SCHEMA),
                         target_columns=['tab_8.col_3=tab_9.col4', 'tab_8.col_4=tab_9.col5'])
 
+DELETE_EXPECTED = Query(procedure='testproc',
+                        operation='DELETE',
+                        target_table=Table(name='src_tab_10', schema=DEFAULT_SCHEMA))
+
 PROCEDURE_EXPECTED = Procedure(path=procedure_path,
                                name='testproc',
                                schema='example',
-                               queries=[INSERT_EXPECTED, UPDATE_EXPECTED])
+                               queries=[INSERT_EXPECTED, UPDATE_EXPECTED, DELETE_EXPECTED])
 
 
 def test_parse_object_name():
@@ -68,11 +76,14 @@ def test_parse_procedure():
     assert p.schema == PROCEDURE_EXPECTED.schema
     assert p.path == PROCEDURE_EXPECTED.path
 
+    assert len(p.queries) == len(PROCEDURE_EXPECTED.queries)
+
     # Check equality and order at Query level
     for i, q in enumerate(p.queries):
         assert PROCEDURE_EXPECTED.queries[i].procedure == q.procedure
         assert PROCEDURE_EXPECTED.queries[i].operation == q.operation
-        assert PROCEDURE_EXPECTED.queries[i].target_columns == q.target_columns
+        if q.target_columns or PROCEDURE_EXPECTED.queries[i].target_columns:
+            assert PROCEDURE_EXPECTED.queries[i].target_columns == q.target_columns
 
         # Check equality at Table level
         assert PROCEDURE_EXPECTED.queries[i].target_table.__dict__ == q.target_table.__dict__
@@ -89,7 +100,8 @@ def test_parse_procedure():
 @pytest.mark.parametrize(
     "test_input, dmltype, expected",
     [(TEST_INSERT_STATEMENT, 'INSERT', INSERT_EXPECTED),
-     (TEST_UPDATE_STATEMENT, 'UPDATE', UPDATE_EXPECTED)]
+     (TEST_UPDATE_STATEMENT, 'UPDATE', UPDATE_EXPECTED),
+     (TEST_DELETE_STATEMENT, 'DELETE', DELETE_EXPECTED)]
 )
 def test_parse_statement(test_input, dmltype, expected):
 
@@ -99,7 +111,8 @@ def test_parse_statement(test_input, dmltype, expected):
 
     # Check equality at Query level
     assert expected.operation == r.operation
-    assert expected.target_columns == r.target_columns
+    if expected.target_columns or r.target_columns:
+        assert expected.target_columns == r.target_columns
 
     # Check equality at Table level
     assert expected.target_table.__dict__ == r.target_table.__dict__

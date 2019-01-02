@@ -51,6 +51,8 @@ CREATE PROCEDURE example.testproc(IN test_arg int unsigned)
       tab_8.col_4 = tab_9.col5
   WHERE tab_8.col_6 > 0;
 
+  DELETE FROM src_tab_10 tab_10 WHERE col_1 < 100;
+
 END
 
 ;;
