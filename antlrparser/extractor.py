@@ -108,8 +108,6 @@ class FileProcessor:
         PROCEDURE_REGEX = re.compile(f'CREATE\s+?PROCEDURE.*?{DELIMITER}',
                                      re.DOTALL | re.IGNORECASE)
 
-        print(path)
-
         with open(path, 'r') as file:
             # Grammar is case-sensitive. Input has to be converted
             # to upper case before parsing
@@ -124,7 +122,7 @@ class FileProcessor:
 
         """
         Separates name and schema from a raw database object name.
-        If no schema is foiund, uses the default schema defined
+        If no schema is found, uses the default schema defined
         in the configuration.
 
         :param name: raw table name
@@ -170,7 +168,7 @@ class FileProcessor:
         """
 
         schema, name = self.get_procedure_name(p)
-        proc = Procedure(path, name=name, schema=schema)
+        proc = Procedure(path, name=name, schema=schema, queries=[])
 
         mapper = Mapper()
 
