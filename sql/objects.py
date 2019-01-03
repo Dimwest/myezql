@@ -1,12 +1,12 @@
 
 class Procedure:
 
-    def __init__(self, path, name=None, schema=None):
+    def __init__(self, path, name=None, schema=None, queries=None):
 
         self.name = name
         self.schema = schema
         self.path = path
-        self.queries = []
+        self.queries = queries
 
 
 class Query:

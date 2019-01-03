@@ -6,7 +6,7 @@ Python CLI tool parsing MySQL procedures
 - [x] Add type hints
 - [x] Split FROM and JOIN tables
 - [ ] Add unit and end-to-end testing
-- [ ] Rethink "replace" logic for faulty keywords
+- [x] Remove unecessary "replace" logic for faulty keywords
 - [ ] Move config to .yml format
 - [ ] Refactor redundant functions in processor logic, move as much as possible to utils
 - [ ] Introduce python-fire (https://github.com/google/python-fire) and rethink objects logic

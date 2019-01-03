@@ -3,3 +3,4 @@ ujson==1.35
 sqlparse==0.2.4
 typing==3.6.4
 antlr4_python3_runtime==4.7.2
+pytest==3.8.0

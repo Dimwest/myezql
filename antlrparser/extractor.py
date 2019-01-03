@@ -32,11 +32,6 @@ class Mapper:
              'DELETE': re.compile('DELETE\s+?FROM.*?;',
                                   re.DOTALL | re.IGNORECASE)}
 
-        self.cleanup_regexes = {
-            re.compile('ON\s+DUPLICATE\s+KEY\s+UPDATE.*?;',
-                       re.DOTALL | re.IGNORECASE): ';',
-            re.compile('INSTALL'): 'INST'}
-
         self.methods = None
         self.parser = None
         self.extractors = None
@@ -127,7 +122,7 @@ class FileProcessor:
 
         """
         Separates name and schema from a raw database object name.
-        If no schema is foiund, uses the default schema defined
+        If no schema is found, uses the default schema defined
         in the configuration.
 
         :param name: raw table name
@@ -173,7 +168,7 @@ class FileProcessor:
         """
 
         schema, name = self.get_procedure_name(p)
-        proc = Procedure(path, name=name, schema=schema)
+        proc = Procedure(path, name=name, schema=schema, queries=[])
 
         mapper = Mapper()
 
@@ -199,7 +194,6 @@ class FileProcessor:
         :return: Query object containing the statement information
         """
 
-        s = self.cleanup_statement(s, mapper)
         input = InputStream(s)
         lexer = MySqlLexer(input)
         stream = CommonTokenStream(lexer)
@@ -336,24 +330,6 @@ class FileProcessor:
         q.target_table = self.get_target_table(tree)
 
         return q
-
-    def cleanup_statement(self, s: str, mapper: Mapper) -> str:
-
-        """
-        Iterates over a Mapper object's cleanup_regexes dict to replace
-        eventual edge cases in a statement body, e.g. keywords contained
-        in a table name.
-
-        :param s: string to replace into
-        :param mapper: Mapper object
-        :return: new string value
-        """
-
-        # TODO -> Move to utils.utils
-
-        for k, v in mapper.cleanup_regexes.items():
-            s = re.sub(k, v, s)
-        return s
 
     def get_source_tables_update(self, tree: ParserRuleContext) \
             -> List[Table]:
