@@ -7,13 +7,11 @@ described in SQL files.
 
 The tool is simple to use:
 ```bash
-python3 ezql.py file --i /my/path.sql
-python3 ezql.py dir --i /my/path/
+python3 ezql.py show --i /my/path.sql
 ```
 Results can optionally be saved in .json files 
 ```bash
-python3 ezql.py file --i /my/path.sql --0 /output/file.json
-python3 ezql.py dir --i /my/path/ --0 /output/file.json
+python3 ezql.py show --i /my/path.sql --0 /output/file.json
 ```
 
 ## To-do list
@@ -30,6 +28,7 @@ python3 ezql.py dir --i /my/path/ --0 /output/file.json
 
 #### Tool functionalities:
 - [ ] Pass default schema via cmd
+- [ ] Improve output
 - [ ] New DDL statements
 - [ ] Add multithreading at file level
 - [ ] Add proper config file
