@@ -1,8 +1,8 @@
 import pytest
-from antlrparser.extractor import FileProcessor, Mapper
-from sql.objects import Procedure, Query, Table
+from antlrparser.tasks import FileProcessor
+from sql.objects import Procedure
 from sqlparse import format as fmt
-from config.config import DEFAULT_SCHEMA
+from utils.extract import *
 
 procedure_path = './tests/resources/procedure.sql'
 insert_path = './tests/resources/insert.sql'
@@ -53,15 +53,13 @@ PROCEDURE_EXPECTED = Procedure(path=procedure_path,
 def test_parse_object_name():
 
     # Ensure that object name gets correctly split
-    processor = FileProcessor()
-    assert processor.parse_object_name('example.testproc') == ('example', 'testproc')
+    assert parse_object_name('example.testproc') == ('example', 'testproc')
 
 
 def test_get_procedure_name():
 
     # Ensure that procedure name gets correctly identified and split
-    processor = FileProcessor()
-    assert processor.get_procedure_name(TEST_PROCEDURE) == ('example', 'testproc')
+    assert get_procedure_name(TEST_PROCEDURE) == ('example', 'testproc')
 
 
 def test_parse_procedure():
@@ -105,9 +103,8 @@ def test_parse_procedure():
 )
 def test_parse_statement(test_input, dmltype, expected):
 
-    processor = FileProcessor()
     mapper = Mapper()
-    r = processor.parse_statement(dmltype=dmltype, s=test_input, mapper=mapper)
+    r = parse_statement(dmltype=dmltype, s=test_input, mapper=mapper)
 
     # Check equality at Query level
     assert expected.operation == r.operation

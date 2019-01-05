@@ -15,10 +15,10 @@ https://msdn.microsoft.com/en-us/library/windows/desktop/ms681382%28v=vs.85%29.a
 
 
 def is_pathname_valid(pathname: str) -> bool:
-    '''
+    """
     `True` if the passed pathname is a valid pathname for the current OS;
     `False` otherwise.
-    '''
+    """
     # If this pathname is either not a string or is but is empty, this pathname
     # is invalid.
     try:
@@ -80,8 +80,6 @@ def is_pathname_valid(pathname: str) -> bool:
         return True
     # If any other exception was raised, this is an unrelated fatal issue
     # (e.g., a bug). Permit this exception to unwind the call stack.
-    #
-    # Did we mention this should be shipped with Python already?
 
 
 def is_path_creatable(pathname: str) -> bool:

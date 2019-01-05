@@ -1,9 +1,13 @@
 import fire
-from utils.utils import *
-from antlrparser.extractor import FileProcessor
+from utils.paths import *
+from antlrparser.tasks import FileProcessor
 from output.json import to_json
 from output.cmd import beautify
 import os
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class MyEzQl(object):
