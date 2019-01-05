@@ -3,6 +3,8 @@
 MyEzQl is a Python CLI tool parsing MySQL procedures and enabling easier understanding and visualization of data flows 
 described in SQL files.
 
+![MyEzQL screenshot](https://raw.githubusercontent.com/Dimwest/MyEzSQL/main_img/README.png)
+
 ## How to use it
 
 The tool is simple to use:
