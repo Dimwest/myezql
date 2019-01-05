@@ -12,7 +12,7 @@ def beautify(results: List[Procedure]) -> None:
     :return: None, only displays the results
     """
 
-    msg = f'MySQL Worklow Analyzer:'
+    msg = f'\n====> Parsing results <===='
 
     for p in results:
         msg += f'\n\n{Fore.GREEN}----------------------------\n'
@@ -31,14 +31,7 @@ def beautify(results: List[Procedure]) -> None:
                     for f in q.join_table:
                         msg += f'{Fore.CYAN}                  ' \
                                f'. {Fore.BLUE}JOIN{Fore.CYAN} {f.name}{Style.RESET_ALL}\n'
-            msg += f'. {Fore.BLUE}Columns --> {Fore.CYAN} {q.target_columns}{Style.RESET_ALL}\n\n'
-
-    print(
-        f'{Style.RESET_ALL}###################################################################################\n'
-    )
+            if q.target_columns:
+                msg += f'. {Fore.BLUE}Columns --> {Fore.CYAN} {q.target_columns}{Style.RESET_ALL}\n\n'
 
     print(msg)
-
-    print(
-        f'{Style.RESET_ALL}###################################################################################\n'
-    )
