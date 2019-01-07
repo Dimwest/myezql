@@ -1,7 +1,7 @@
 import fire
 from utils.paths import *
 from utils.logging import *
-from antlrparser.runner import Runner
+from parse.runner import Runner
 from output.json import to_json
 from output.cmd import beautify
 from config import *

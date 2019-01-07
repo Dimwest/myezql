@@ -16,16 +16,17 @@ Here is a sample result:
 
 ![MyEzQL screenshot](README.png?raw=true "MyEzQL screenshot")
 
-"Create procedure" statements can be parsed specifically by setting the --p flag to 1 or True
+"Create procedure" statements can be parsed specifically by setting the --p flag to 1 or True.
+If not set, DDL statements will be parsed without being tied to the eventual procedure containing them.
 ```bash
 python3 ezql.py show --i /my/path.sql --p 1
 ```
 
 Statement delimiter can be specified using the --dl flag.
 If not specified as command line argument, the delimiter will have the value defined in config/config.py. By default, it's ';;'.
-Always make sure you are using a correct delimiter.
+If the --p flag is set to True, this delimiter is used for procedures only, and it is assumed that individual DDL statements inside of the procedure use ';' as delimiter.
 ```bash
-python3 ezql.py show --i /my/path.sql --delimiter ';;'
+python3 ezql.py show --i /my/path.sql --dl ';;'
 ```
 
 A default schema can be specified using the --ds flag.

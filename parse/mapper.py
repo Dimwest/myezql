@@ -1,4 +1,4 @@
-from antlrparser.regex import *
+from parse.regex import *
 
 
 class Mapper:

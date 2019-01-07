@@ -7,9 +7,9 @@ from typing import List
 def to_json(results: List[Procedure], path: str) -> None:
 
     """
-    Convenience function exporting antlrparser results to a JSON file at the path specified as utils.
+    Convenience function exporting parse results to a JSON file at the path specified as utils.
 
-    :param results: list of results from antlrparser.utils.parse_dir function
+    :param results: list of results from parse.runner.Runner object
     :param path: target directory storing JSON file
     """
 
