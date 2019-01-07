@@ -1,6 +1,6 @@
 import pytest
-from antlrparser.runner import Runner
-from antlrparser.mapper import Mapper
+from parse.runner import Runner
+from parse.mapper import Mapper
 from sql.objects import Procedure, Query, Table
 from sqlparse import format as fmt
 

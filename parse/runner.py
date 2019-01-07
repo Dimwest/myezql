@@ -1,14 +1,14 @@
 import os
 import re
 import multiprocessing as mp
-from antlrparser.regex import procedure_regex, NAME_REGEX
+from parse.regex import procedure_regex, NAME_REGEX
 from sqlparse import format as fmt
 from sql.objects import Procedure
 from antlr4 import ParserRuleContext, TerminalNode, ErrorNode, \
     InputStream, CommonTokenStream
-from antlrparser.lexer import MySqlLexer
-from antlrparser.parser import MySqlParser
-from antlrparser.mapper import Mapper
+from parse.lexer import MySqlLexer
+from parse.parser import MySqlParser
+from parse.mapper import Mapper
 from sql.objects import Query, Table
 from typing import List, Tuple, Optional
 
