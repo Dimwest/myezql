@@ -1,22 +1,45 @@
 # MyEzQL
 
-MyEzQl is a Python CLI tool parsing MySQL procedures and enabling easier understanding and visualization of data flows 
-described in SQL files.
+MyEzQl is a Python CLI tool parsing MySQL-syntax files and enabling easier understanding and visualization of data flows 
+described in those files.
+
+## How to
+
+Read from any SQL file or directory containing SQL files:
+
+```bash
+python3 ezql.py show --i /my/path.sql
+python3 ezql.py show --i /my/dir
+```
+
+Here is a sample result:
 
 ![MyEzQL screenshot](README.png?raw=true "MyEzQL screenshot")
 
-## How to use it
-
-The tool is simple to use:
+"Create procedure" statements can be parsed specifically by setting the --p flag to 1 or True
 ```bash
-python3 ezql.py show --i /my/path.sql
-```
-Results can optionally be saved in .json files 
-```bash
-python3 ezql.py show --i /my/path.sql --0 /output/file.json
+python3 ezql.py show --i /my/path.sql --p 1
 ```
 
-## To-do list
+Statement delimiter can be specified using the --dl flag.
+If not specified as command line argument, the delimiter will have the value defined in config/config.py. By default, it's ';;'.
+Always make sure you are using a correct delimiter.
+```bash
+python3 ezql.py show --i /my/path.sql --delimiter ';;'
+```
+
+A default schema can be specified using the --ds flag.
+If not specified as command line argument, the default schema will have the value defined in config/config.py
+```bash
+python3 ezql.py show --i /my/path.sql --ds default
+```
+
+Results can optionally be saved in a .json file 
+```bash
+python3 ezql.py show --i /my/path.sql --o /output/file.json
+```
+
+## To-do
 
 #### Refactoring:
 - [ ] Improve project structure
@@ -26,16 +49,18 @@ python3 ezql.py show --i /my/path.sql --0 /output/file.json
 
 #### Tests:
 - [ ] Finish smaller units testing
+- [ ] Add more cases
 - [x] Add end-to-end testing of processing
 
 #### Tool functionalities:
 - [ ] Pass default schema via cmd
 - [ ] Improve output
 - [ ] New DDL statements
-- [ ] Add multithreading at file level
 - [ ] Add proper config file
 - [ ] Add install script
 - [ ] Store JSONs in local TinyDB
+- [x] Add "all DDL" and "all procedures" modes
+- [x] Add multiprocessing at file parsing level
 - [x] Introduce python-fire (https://github.com/google/python-fire)
 - [x] Split FROM and JOIN tables
 - [x] Add first draft

@@ -1,8 +1,8 @@
 import pytest
-from antlrparser.extractor import FileProcessor, Mapper
+from antlrparser.runner import Runner
+from antlrparser.mapper import Mapper
 from sql.objects import Procedure, Query, Table
 from sqlparse import format as fmt
-from config.config import DEFAULT_SCHEMA
 
 procedure_path = './tests/resources/procedure.sql'
 insert_path = './tests/resources/insert.sql'
@@ -26,23 +26,27 @@ with open(update_path, 'r') as file:
 with open(delete_path, 'r') as file:
     TEST_DELETE_STATEMENT = fmt(file.read().upper(), strip_comments=True).strip()
 
+TEST_DEFAULT_SCHEMA = 'default_schema'
+TEST_DELIMITER = ';;'
+TEST_MODE = 'procedure'
+
 INSERT_EXPECTED = Query(procedure='testproc',
                         operation='INSERT',
-                        from_table=[Table(name='src_tab_1', schema=DEFAULT_SCHEMA)],
-                        join_table=[Table(name='src_tab_2', schema=DEFAULT_SCHEMA),
-                                    Table(name='src_tab_3', schema=DEFAULT_SCHEMA)],
-                        target_table=Table(name='mytable', schema=DEFAULT_SCHEMA),
+                        from_table=[Table(name='src_tab_1', schema=TEST_DEFAULT_SCHEMA)],
+                        join_table=[Table(name='src_tab_2', schema=TEST_DEFAULT_SCHEMA),
+                                    Table(name='src_tab_3', schema=TEST_DEFAULT_SCHEMA)],
+                        target_table=Table(name='mytable', schema=TEST_DEFAULT_SCHEMA),
                         target_columns=['col_1', 'col_2', 'col_3', 'col_4', 'col_5', 'col_6', 'col_7'])
 
 UPDATE_EXPECTED = Query(procedure='testproc',
                         operation='UPDATE',
-                        join_table=[Table(name='src_tab_9', schema=DEFAULT_SCHEMA)],
-                        target_table=Table(name='src_tab_8', schema=DEFAULT_SCHEMA),
+                        join_table=[Table(name='src_tab_9', schema=TEST_DEFAULT_SCHEMA)],
+                        target_table=Table(name='src_tab_8', schema=TEST_DEFAULT_SCHEMA),
                         target_columns=['tab_8.col_3=tab_9.col4', 'tab_8.col_4=tab_9.col5'])
 
 DELETE_EXPECTED = Query(procedure='testproc',
                         operation='DELETE',
-                        target_table=Table(name='src_tab_10', schema=DEFAULT_SCHEMA))
+                        target_table=Table(name='src_tab_10', schema=TEST_DEFAULT_SCHEMA))
 
 PROCEDURE_EXPECTED = Procedure(path=procedure_path,
                                name='testproc',
@@ -52,24 +56,24 @@ PROCEDURE_EXPECTED = Procedure(path=procedure_path,
 
 def test_parse_object_name():
 
-    # Ensure that object name gets correctly split
-    processor = FileProcessor()
-    assert processor.parse_object_name('example.testproc') == ('example', 'testproc')
+    # Ensure that object name gets correctly split and default schema behavior works
+    p = Runner(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
+    assert p.parse_object_name('example.testproc') == ('example', 'testproc')
+    assert p.parse_object_name('testproc') == (TEST_DEFAULT_SCHEMA, 'testproc')
 
 
 def test_get_procedure_name():
 
     # Ensure that procedure name gets correctly identified and split
-    processor = FileProcessor()
-    assert processor.get_procedure_name(TEST_PROCEDURE) == ('example', 'testproc')
+    p = Runner(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
+    assert p.get_procedure_name(TEST_PROCEDURE) == ('example', 'testproc')
 
 
 def test_parse_procedure():
 
     # Run parser on test procedure file
-    processor = FileProcessor()
-    processor.parse_procedure(procedure_path, TEST_PROCEDURE)
-    p = processor.results[0]
+    processor = Runner(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
+    p = processor.parse_str(procedure_path, TEST_PROCEDURE)
 
     # Check equality at Procedure level
     assert p.name == PROCEDURE_EXPECTED.name
@@ -105,9 +109,9 @@ def test_parse_procedure():
 )
 def test_parse_statement(test_input, dmltype, expected):
 
-    processor = FileProcessor()
-    mapper = Mapper()
-    r = processor.parse_statement(dmltype=dmltype, s=test_input, mapper=mapper)
+    mapper = Mapper(TEST_DELIMITER, TEST_MODE)
+    p = Runner(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
+    r = p.parse_statement(dmltype=dmltype, s=test_input, mapper=mapper)
 
     # Check equality at Query level
     assert expected.operation == r.operation

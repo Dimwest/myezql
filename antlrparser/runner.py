@@ -1,84 +1,30 @@
 import os
 import re
-import logging
-from config.config import DEFAULT_SCHEMA, DELIMITER
+import multiprocessing as mp
+from antlrparser.regex import procedure_regex, NAME_REGEX
 from sqlparse import format as fmt
-from sql.objects import Query, Procedure, Table
+from sql.objects import Procedure
 from antlr4 import ParserRuleContext, TerminalNode, ErrorNode, \
     InputStream, CommonTokenStream
 from antlrparser.lexer import MySqlLexer
 from antlrparser.parser import MySqlParser
-from typing import Tuple, List, Optional
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-
-class Mapper:
-
-    """Helper class used to map DML extraction regexes with parsing
-    methods. Also provides cleanup regexes used to deal with edge
-    cases, e.g. table names containing SQL keywords"""
-
-    def __init__(self):
-
-        self.extract_regexes = \
-            {'INSERT': re.compile('INSERT\s+?INTO.*?;',
-                                  re.DOTALL | re.IGNORECASE),
-             'REPLACE': re.compile('REPLACE\s+?INTO.*?;',
-                                   re.DOTALL | re.IGNORECASE),
-             'UPDATE': re.compile('UPDATE\s+.*?;',
-                                  re.DOTALL | re.IGNORECASE),
-             'DELETE': re.compile('DELETE\s+?FROM.*?;',
-                                  re.DOTALL | re.IGNORECASE)}
-
-        self.methods = None
-        self.parser = None
-        self.extractors = None
-        self.parsermethods = None
-        self.mapper = None
-
-    def map_methods(self, walker):
-
-        """
-        Maps the required regexes and functions by DML type.
-
-        :param walker: Treewalker object
-        """
-
-        methods = \
-            {'INSERT': self.parser.insertStatement,
-             'REPLACE': self.parser.replaceStatement,
-             'UPDATE': self.parser.updateStatement,
-             'DELETE': self.parser.deleteStatement}
-
-        self.extractors = \
-            {'INSERT': walker.parse_insert,
-             'REPLACE': walker.parse_insert,
-             'UPDATE': walker.parse_update,
-             'DELETE': walker.parse_delete}
-
-        self.parsermethods = methods
-        self.mapper = {k: {'regex': v}
-                       for k, v in self.extract_regexes.items()}
-        for k in self.mapper.keys():
-            self.mapper[k]['parsermethod'] = self.parsermethods[k]
-            self.mapper[k]['extractor'] = self.extractors[k]
+from antlrparser.mapper import Mapper
+from sql.objects import Query, Table
+from typing import List, Tuple, Optional
 
 
-class FileProcessor:
+class Runner:
 
     """Main class managing all the parsing operations
     processing using ANTLR-generated objects"""
 
-    # TODO -> Move settings to Config object
-    # TODO -> Ensure regexes are compiled only once
-
-    def __init__(self):
+    def __init__(self, default_schema: str, delimiter: str, mode: str) -> None:
 
         self.results = []
-        self.errored = []
-        self.default_schema = DEFAULT_SCHEMA
+        self.delimiter = delimiter
+        self.proc_regex = procedure_regex(self.delimiter)
+        self.default_schema = default_schema
+        self.mode = mode
 
     def parse_dir(self, dir_path: str) -> None:
 
@@ -89,15 +35,19 @@ class FileProcessor:
         :param dir_path: path to the target directory
         """
 
+        # Create multiprocessing pool
+        pool = mp.Pool()
+        sql_files = []
         # Walk through directory
         for root, dirs, files in os.walk(dir_path, topdown=False):
             # Loop on .sql files
             for name in files:
                 if name.endswith('.sql'):
-                    path = f'{root}/{name}'
-                    self.parse_file(path)
+                    sql_files.append(f'{root}{name}')
+        results = pool.map(self.parse_file, sql_files)
+        self.results = [p for file in results for p in file]
 
-    def parse_file(self, path: str) -> None:
+    def parse_file(self, path: str) -> List[Procedure]:
 
         """
         Finds and parses all procedures in SQL file.
@@ -105,18 +55,66 @@ class FileProcessor:
         :param path: file path
         """
 
-        PROCEDURE_REGEX = re.compile(f'CREATE\s+?PROCEDURE.*?{DELIMITER}',
-                                     re.DOTALL | re.IGNORECASE)
+        results = []
 
         with open(path, 'r') as file:
             # Grammar is case-sensitive. Input has to be converted
             # to upper case before parsing
-            input = fmt(file.read().upper(), strip_comments=True).strip()
+            file_input = fmt(file.read().upper(), strip_comments=True).strip()
 
-            # Find all CREATE PROCEDURE statements and parse them
-            procedures = re.findall(PROCEDURE_REGEX, input)
-            for proc in procedures:
-                self.parse_procedure(path, proc)
+            # Parsing modes switch
+            if self.mode == 'procedure':
+                procedures = re.findall(self.proc_regex, file_input)
+                for proc in procedures:
+                    results.append(self.parse_str(path, proc))
+            elif self.mode == 'ddl':
+                results.append(self.parse_str(path, file_input))
+
+        return results
+
+    def parse_str(self, path: str, p: str) -> Procedure:
+
+        """
+        Gets all configured DML statements inside a procedure body,
+        parses them, stores results in Procedure objects, and appends
+        these objects to self.results.
+
+        :param path: the procedure path is passed here as the Procedure
+        instantiation requires it.
+        :param p: procedure body string
+        :param mode: parsing mode, "procedure" or "ddl"
+        """
+
+        if self.mode == 'procedure':
+            schema, name = self.get_procedure_name(p)
+        elif self.mode == 'ddl':
+            schema, name = '', path
+        proc = Procedure(path, name=name, schema=schema, queries=[])
+
+        mapper = Mapper(self.delimiter, self.mode)
+
+        for dmltype in mapper.extract_regexes.keys():
+            statements = re.findall(mapper.extract_regexes[dmltype], p)
+            for s in statements:
+                q = self.parse_statement(dmltype, s, mapper)
+                if q:
+                    q.procedure = name
+                    proc.queries.append(q)
+
+        return proc
+
+    def get_procedure_name(self, p: str) -> Tuple[str, str]:
+
+        """
+        Gets the procedure name from the procedure body.
+
+        :param p: procedure string
+        :return: tuple (schema_string, name_string)
+        """
+
+        name = re.search(NAME_REGEX, p).group().lower()
+        schema, name = self.parse_object_name(name)
+        return schema, name
 
     def parse_object_name(self, name: str) -> Tuple[str, str]:
 
@@ -129,8 +127,6 @@ class FileProcessor:
         :return: tuple (schema_string, name_string)
         """
 
-        # TODO -> Move to utils.utils by adding default_schema parameter
-
         if '.' in name:
             schema = name.split('.')[0]
             name = name.split('.')[1]
@@ -138,49 +134,6 @@ class FileProcessor:
             schema = self.default_schema
 
         return schema, name
-
-    def get_procedure_name(self, p: str) -> Tuple[str, str]:
-
-        """
-        Gets the procedure name from the procedure body.
-
-        :param p: procedure string
-        :return: tuple (schema_string, name_string)
-        """
-
-        NAME_REGEX = re.compile(
-            '(?<=CREATE\sPROCEDURE\s)(?:IF\s+(NOT\s+)?EXISTS\s+)?([a-zA-Z.]+)',
-            re.IGNORECASE)
-        name = re.search(NAME_REGEX, p).group().lower()
-        schema, name = self.parse_object_name(name)
-        return schema, name
-
-    def parse_procedure(self, path: str, p: str) -> None:
-
-        """
-        Gets all configured DML statements inside a procedure body,
-        parses them, stores results in Procedure objects, and appends
-        these objects to self.results.
-
-        :param path: the procedure path is passed here as the Procedure
-        instantiation requires it.
-        :param p: procedure body string
-        """
-
-        schema, name = self.get_procedure_name(p)
-        proc = Procedure(path, name=name, schema=schema, queries=[])
-
-        mapper = Mapper()
-
-        for dmltype in mapper.extract_regexes.keys():
-            statements = re.findall(mapper.extract_regexes[dmltype], p)
-            for s in statements:
-                q = self.parse_statement(dmltype, s, mapper)
-                if q:
-                    q.procedure = name
-                    proc.queries.append(q)
-
-        self.results.append(proc)
 
     def parse_statement(self, dmltype: str, s: str, mapper: Mapper) -> Query:
 
@@ -194,10 +147,10 @@ class FileProcessor:
         :return: Query object containing the statement information
         """
 
-        input = InputStream(s)
-        lexer = MySqlLexer(input)
-        stream = CommonTokenStream(lexer)
-        parser = MySqlParser(stream)
+        input_stream = InputStream(s)
+        lexer = MySqlLexer(input_stream)
+        token_stream = CommonTokenStream(lexer)
+        parser = MySqlParser(token_stream)
         mapper.parser = parser
         mapper.map_methods(self)
         tree = mapper.mapper[dmltype]['parsermethod']()
@@ -261,9 +214,8 @@ class FileProcessor:
         q.join_table = self.get_source_tables_update(tree)
         q.target_columns = self.get_updated_columns(tree)
 
+        # TODO -> Get rid of this if statement
         if q.target_table and q.join_table:
-            msg = {'join': [x.name for x in q.join_table if x]}
-            logger.info(f'UPDATE: {msg}')
             return q
 
     def get_inserted_tables(self, tree: ParserRuleContext) \
@@ -280,9 +232,6 @@ class FileProcessor:
             if isinstance(child, MySqlParser.InsertStatementValueContext):
                 from_table = self.get_source_tables_insert(child, 'from')
                 join_table = self.get_source_tables_insert(child, 'join')
-                msg = {'from': [x.name for x in from_table if x],
-                       'join': [x.name for x in join_table if x]}
-                logger.info(f'INSERT/REPLACE: {msg}')
                 return from_table, join_table
 
     def parse_insert(self, tree: ParserRuleContext, dmltype: str) -> Query:
