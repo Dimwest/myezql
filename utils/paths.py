@@ -2,6 +2,12 @@ import errno
 import os
 import sys
 
+import logging
+from time import time
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 # Sadly, Python fails to provide the following magic number for us.
 ERROR_INVALID_NAME = 123
 """
