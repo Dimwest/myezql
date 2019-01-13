@@ -18,7 +18,7 @@ def with_logging(func):
         try:
             result = func(*args, **kwargs)
         except Exception as e:
-            logger.error(f'Error during execution of {func.__name__}:\n\n{e}')
+            logger.error(f'Error during execution of {func.__name__}:\n\n{type(e)}\n{e}')
             return
         te = time()
         logger.info(f'Completed: {func.__name__}' + f' in {te-ts:.3f} sec')

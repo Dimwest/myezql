@@ -13,12 +13,18 @@ class Mapper:
         REPLACE_REGEX = replace_regex(delimiter) if mode == 'ddl' else replace_regex(';')
         UPDATE_REGEX = update_regex(delimiter) if mode == 'ddl' else update_regex(';')
         DELETE_REGEX = delete_regex(delimiter) if mode == 'ddl' else delete_regex(';')
+        CREATE_TABLE_REGEX = create_table_regex(delimiter) if mode == 'ddl' else create_table_regex(';')
+        DROP_TABLE_REGEX = drop_table_regex(delimiter) if mode == 'ddl' else create_table_regex(';')
+        TRUNCATE_REGEX = truncate_regex(delimiter) if mode == 'ddl' else truncate_regex(';')
 
         self.extract_regexes = \
             {'INSERT': INSERT_REGEX,
              'REPLACE': REPLACE_REGEX,
              'UPDATE': UPDATE_REGEX,
-             'DELETE': DELETE_REGEX}
+             'DELETE': DELETE_REGEX,
+             'CREATE TABLE': CREATE_TABLE_REGEX,
+             'DROP TABLE': DROP_TABLE_REGEX,
+             'TRUNCATE': TRUNCATE_REGEX}
 
         self.methods = None
         self.parser = None
@@ -38,13 +44,19 @@ class Mapper:
             {'INSERT': self.parser.insertStatement,
              'REPLACE': self.parser.replaceStatement,
              'UPDATE': self.parser.updateStatement,
-             'DELETE': self.parser.deleteStatement}
+             'DELETE': self.parser.deleteStatement,
+             'CREATE TABLE': self.parser.createTable,
+             'DROP TABLE': self.parser.dropTable,
+             'TRUNCATE': self.parser.truncateTable}
 
         extractors = \
             {'INSERT': walker.parse_insert,
              'REPLACE': walker.parse_insert,
              'UPDATE': walker.parse_update,
-             'DELETE': walker.parse_delete}
+             'DELETE': walker.parse_delete,
+             'CREATE TABLE': walker.parse_create_table,
+             'DROP TABLE': walker.parse_drop_table,
+             'TRUNCATE': walker.parse_truncate}
 
         parsermethods = methods
         self.mapper = {k: {'regex': v}
