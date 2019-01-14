@@ -25,7 +25,7 @@ class Runner:
         self.proc_regex = procedure_regex(self.delimiter)
         self.default_schema = default_schema
         self.mode = mode
-
+    
     def parse_dir(self, dir_path: str) -> None:
 
         """
@@ -60,7 +60,7 @@ class Runner:
         with open(path, 'r') as file:
             # Grammar is case-sensitive. Input has to be converted
             # to upper case before parsing
-            file_input = fmt(file.read().upper(), strip_comments=True).strip()
+            file_input = fmt(file.read().upper().replace('`', ''), strip_comments=True).strip()
 
             # Parsing modes switch
             if self.mode == 'procedure':
@@ -112,7 +112,7 @@ class Runner:
         :return: tuple (schema_string, name_string)
         """
 
-        name = re.search(NAME_REGEX, p).group().lower()
+        name = re.search(NAME_REGEX, p).group(1).lower()
         schema, name = self.parse_object_name(name)
         return schema, name
 
@@ -195,6 +195,97 @@ class Runner:
         target_columns = []
         return target_columns
 
+    def parse_create_table(self, tree: ParserRuleContext, dmltype: str) \
+            -> Optional[Query]:
+
+        """
+        Parse the three types of CREATE TABLE statements existing in MySQL 5.6,
+        returns as much information as possible in each case.
+
+        :param tree: AST object parsed
+        :param dmltype: DML statement type for Query object instantiation
+        :return: Query object containing the statement information
+        """
+
+        q = Query()
+        q.target_table = self.get_target_table(tree)
+
+        # Parse create table column statements
+        if isinstance(tree, MySqlParser.ColumnCreateTableContext):
+            q.operation = f'{dmltype} COLUMNS'
+            q.target_columns = self.get_create_table_columns(tree)
+
+        # Parse create table query statements
+        elif isinstance(tree, MySqlParser.QueryCreateTableContext):
+            q.operation = f'{dmltype} QUERY'
+            q.from_table = self.get_source_tables_insert(tree, 'from')
+            q.join_table = self.get_source_tables_insert(tree, 'join')
+            try:
+                query = tree.selectStatement().querySpecification()
+            except AttributeError as e:
+                query = tree.selectStatement().queryExpression().querySpecification()
+            q.target_columns = query.selectElements().getText().lower().split(',')
+
+        # Parse create table like statements
+        elif isinstance(tree, MySqlParser.CopyCreateTableContext):
+            q.operation = f'{dmltype} LIKE'
+            target = self.parse_object_name(tree.tableName(0).getText().lower())
+            q.target_table = Table(name=target[1], schema=target[0])
+            source = self.parse_object_name(tree.tableName(1).getText().lower())
+            q.from_table = [Table(name=source[1], schema=source[0])]
+
+        return q
+
+    def get_create_table_columns(self, tree: ParserRuleContext) -> List[str]:
+
+        """
+        Get columns definition in CREATE TABLE "columns" statement.
+        :param tree: AST object parsed
+        :return: list of columns found
+        """
+
+        columns = []
+
+        for c in tree.getChildren():
+
+            if isinstance(c, MySqlParser.ColumnDeclarationContext):
+                columns.append(c.uid().getText().lower())
+            elif not (isinstance(c, TerminalNode) or isinstance(c, ErrorNode)):
+                columns.extend(self.get_create_table_columns(c))
+
+        return columns
+
+    def parse_truncate(self, tree: ParserRuleContext, dmltype: str) -> Query:
+
+        """
+        Parse target table from TRUNCATE statement.
+
+        :param tree: AST object parsed
+        :param dmltype: DML statement type is passed for Query object
+        instantiation
+        :return: Query object containing the statement information
+        """
+
+        q = Query(operation=dmltype)
+        q.target_table = self.get_target_table(tree)
+        return q
+
+    def parse_drop_table(self, tree: ParserRuleContext, dmltype: str) -> Query:
+
+        """
+        Parse target table from DROP TABLE statement.
+
+        :param tree: AST object parsed
+        :param dmltype: DML statement type is passed for Query object
+        instantiation
+        :return: Query object containing the statement information
+        """
+
+        q = Query(operation=dmltype)
+        target = self.parse_object_name(tree.tables().getText().lower())
+        q.target_table = Table(name=target[1], schema=target[0])
+        return q
+
     def parse_update(self, tree: ParserRuleContext, dmltype: str) \
             -> Optional[Query]:
 
@@ -269,7 +360,8 @@ class Runner:
     def parse_delete(self, tree: ParserRuleContext, dmltype: str) -> Query:
 
         """
-        Parses the target table from a DELETE statement
+        Parses target table name from a DELETE statement.
+
         :param tree: AST object parsed
         :param dmltype: DML statement type for Query object instantiation
         :return: Query object containing the statement information

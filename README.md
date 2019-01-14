@@ -42,10 +42,25 @@ python3 ezql.py show --i /my/path.sql --o /output/file.json
 
 ## To-do
 
+#### Parsed statements
+- [x] Drop table
+- [x] Truncate table
+- [x] Create procedure
+- [x] Insert into
+- [x] Replace into
+- [x] Update set
+- [x] Delete from
+- [x] Create table like
+- [x] Create table columns
+- [x] Create table as
+
+
 #### Refactoring:
-- [ ] Improve project structure
+- [ ] Replace as much recursion as possible by parser methods
 - [ ] Refactor output functions
-- [ ] Look for potential redundancy functions in processor logic, move as much as possible to utils
+- [ ] Write \_\_eq\_\_() for sql.objects, rename them, update tests accordingly
+- [ ] Improve logging
+- [x] Improve project structure
 - [x] Add type hints
 
 #### Tests:
@@ -54,15 +69,14 @@ python3 ezql.py show --i /my/path.sql --o /output/file.json
 - [x] Add end-to-end testing of processing
 
 #### Tool functionalities:
-- [ ] Pass default schema via cmd
 - [ ] Improve output
 - [ ] New DDL statements
 - [ ] Add proper config file
 - [ ] Add install script
 - [ ] Store JSONs in local TinyDB
+- [x] Pass default schema via cmd
 - [x] Add "all DDL" and "all procedures" modes
 - [x] Add multiprocessing at file parsing level
 - [x] Introduce python-fire (https://github.com/google/python-fire)
 - [x] Split FROM and JOIN tables
 - [x] Add first draft
-
