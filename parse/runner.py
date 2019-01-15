@@ -9,7 +9,7 @@ from antlr4 import ParserRuleContext, TerminalNode, ErrorNode, \
 from parse.lexer import MySqlLexer
 from parse.parser import MySqlParser
 from parse.mapper import Mapper
-from sql.objects import Query, Table
+from sql.objects import Statement, Table
 from typing import List, Tuple, Optional
 
 
@@ -89,7 +89,7 @@ class Runner:
             schema, name = self.get_procedure_name(p)
         elif self.mode == 'ddl':
             schema, name = '', path
-        proc = Procedure(path, name=name, schema=schema, queries=[])
+        proc = Procedure(path, name=name, schema=schema, statements=[])
 
         mapper = Mapper(self.delimiter, self.mode)
 
@@ -99,7 +99,7 @@ class Runner:
                 q = self.parse_statement(dmltype, s, mapper)
                 if q:
                     q.procedure = name
-                    proc.queries.append(q)
+                    proc.statements.append(q)
 
         return proc
 
@@ -135,7 +135,7 @@ class Runner:
 
         return schema, name
 
-    def parse_statement(self, dmltype: str, s: str, mapper: Mapper) -> Query:
+    def parse_statement(self, dmltype: str, s: str, mapper: Mapper) -> Statement:
 
         """
         Cleans DML statement, creates parsing objects, and returns a
@@ -196,7 +196,7 @@ class Runner:
         return target_columns
 
     def parse_create_table(self, tree: ParserRuleContext, dmltype: str) \
-            -> Optional[Query]:
+            -> Optional[Statement]:
 
         """
         Parse the three types of CREATE TABLE statements existing in MySQL 5.6,
@@ -207,7 +207,7 @@ class Runner:
         :return: Query object containing the statement information
         """
 
-        q = Query()
+        q = Statement()
         q.target_table = self.get_target_table(tree)
 
         # Parse create table column statements
@@ -255,7 +255,7 @@ class Runner:
 
         return columns
 
-    def parse_truncate(self, tree: ParserRuleContext, dmltype: str) -> Query:
+    def parse_truncate(self, tree: ParserRuleContext, dmltype: str) -> Statement:
 
         """
         Parse target table from TRUNCATE statement.
@@ -266,11 +266,11 @@ class Runner:
         :return: Query object containing the statement information
         """
 
-        q = Query(operation=dmltype)
+        q = Statement(operation=dmltype)
         q.target_table = self.get_target_table(tree)
         return q
 
-    def parse_drop_table(self, tree: ParserRuleContext, dmltype: str) -> Query:
+    def parse_drop_table(self, tree: ParserRuleContext, dmltype: str) -> Statement:
 
         """
         Parse target table from DROP TABLE statement.
@@ -281,13 +281,13 @@ class Runner:
         :return: Query object containing the statement information
         """
 
-        q = Query(operation=dmltype)
+        q = Statement(operation=dmltype)
         target = self.parse_object_name(tree.tables().getText().lower())
         q.target_table = Table(name=target[1], schema=target[0])
         return q
 
     def parse_update(self, tree: ParserRuleContext, dmltype: str) \
-            -> Optional[Query]:
+            -> Optional[Statement]:
 
         """
         Parses target table, source table(s) and target columns from
@@ -299,7 +299,7 @@ class Runner:
         :return: Query object containing the statement information
         """
 
-        q = Query(operation=dmltype)
+        q = Statement(operation=dmltype)
 
         q.target_table = self.get_target_table(tree)
         q.join_table = self.get_source_tables_update(tree)
@@ -325,7 +325,7 @@ class Runner:
                 join_table = self.get_source_tables_insert(child, 'join')
                 return from_table, join_table
 
-    def parse_insert(self, tree: ParserRuleContext, dmltype: str) -> Query:
+    def parse_insert(self, tree: ParserRuleContext, dmltype: str) -> Statement:
 
         """
         Parses target table, source table(s) and target columns from
@@ -336,7 +336,7 @@ class Runner:
         :return: Query object containing the statement information
         """
 
-        q = Query(operation=dmltype)
+        q = Statement(operation=dmltype)
         q.target_table = self.get_target_table(tree)
         q.from_table, q.join_table = self.get_inserted_tables(tree)
         q.target_columns = self.get_inserted_columns(tree)
@@ -357,7 +357,7 @@ class Runner:
             if isinstance(child, MySqlParser.DeleteStatementValueContext):
                 return self.get_source_tables_insert(child, 'from')
 
-    def parse_delete(self, tree: ParserRuleContext, dmltype: str) -> Query:
+    def parse_delete(self, tree: ParserRuleContext, dmltype: str) -> Statement:
 
         """
         Parses target table name from a DELETE statement.
@@ -367,7 +367,7 @@ class Runner:
         :return: Query object containing the statement information
         """
 
-        q = Query(operation=dmltype)
+        q = Statement(operation=dmltype)
         q.target_table = self.get_target_table(tree)
 
         return q

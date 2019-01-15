@@ -16,7 +16,7 @@ def to_json(results: List[Procedure], path: str) -> None:
     to_dict = dict()
     for p in results:
         to_dict[p.name] = p.__dict__
-        to_dict[p.name]['queries'] = [q.__dict__ for q in p.queries]
+        to_dict[p.name]['queries'] = [q.__dict__ for q in p.statements]
 
     with open(path, 'w') as fp:
         ujson.dump(to_dict, fp, indent=4, sort_keys=True)

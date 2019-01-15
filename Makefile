@@ -17,6 +17,9 @@ lint: venv
 	venv/bin/flake8 src tests
 
 unit_test: venv
-	venv/bin/py.test -vvvv -r sxX tests
+	venv/bin/py.test -vvvv -r sxX tests/test_unit.py
 
-test: venv unit_test
+e2e_test: venv
+	venv/bin/py.test -vvvv -r sxX tests/test_e2e.py
+
+test: venv unit_test e2e_test

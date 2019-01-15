@@ -17,7 +17,7 @@ def beautify(results: List[Procedure]) -> None:
         msg += f'\n\n{Fore.GREEN}----------------------------\n'
         msg += f'{Fore.GREEN}{p.schema}.{p.name} ({p.path})\n'
         msg += f'{Fore.GREEN}----------------------------\n{Style.RESET_ALL}'
-        for q in p.queries:
+        for q in p.statements:
             msg += f'|\n|--- {Fore.BLUE}{q.operation}{Style.RESET_ALL} ' \
                    f'----> {Fore.CYAN}{q.target_table.schema}.{q.target_table.name}\n{Style.RESET_ALL}'
 
