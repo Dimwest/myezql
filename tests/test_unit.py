@@ -1,60 +1,15 @@
 import pytest
 from parse.runner import Runner
 from parse.mapper import Mapper
-from sql.objects import Procedure, Query, Table
-from sqlparse import format as fmt
-
-procedure_path = './tests/resources/procedure.sql'
-insert_path = './tests/resources/insert.sql'
-update_path = './tests/resources/update.sql'
-delete_path = './tests/resources/delete.sql'
-
-# NB: Antlr grammar is case-sensitive. Input has to be upper case.
-# Open and upper case test procedure file
-with open(procedure_path, 'r') as file:
-    TEST_PROCEDURE = fmt(file.read().upper(), strip_comments=True).strip()
-
-# Open and upper case test insert statement
-with open(insert_path, 'r') as file:
-    TEST_INSERT_STATEMENT = fmt(file.read().upper(), strip_comments=True).strip()
-
-# Open and upper case test update statement
-with open(update_path, 'r') as file:
-    TEST_UPDATE_STATEMENT = fmt(file.read().upper(), strip_comments=True).strip()
-
-# Open and upper case test delete statement
-with open(delete_path, 'r') as file:
-    TEST_DELETE_STATEMENT = fmt(file.read().upper(), strip_comments=True).strip()
-
-TEST_DEFAULT_SCHEMA = 'default_schema'
-TEST_DELIMITER = ';;'
-TEST_MODE = 'procedure'
-
-INSERT_EXPECTED = Query(procedure='testproc',
-                        operation='INSERT',
-                        from_table=[Table(name='src_tab_1', schema=TEST_DEFAULT_SCHEMA)],
-                        join_table=[Table(name='src_tab_2', schema=TEST_DEFAULT_SCHEMA),
-                                    Table(name='src_tab_3', schema=TEST_DEFAULT_SCHEMA)],
-                        target_table=Table(name='mytable', schema=TEST_DEFAULT_SCHEMA),
-                        target_columns=['col_1', 'col_2', 'col_3', 'col_4', 'col_5', 'col_6', 'col_7'])
-
-UPDATE_EXPECTED = Query(procedure='testproc',
-                        operation='UPDATE',
-                        join_table=[Table(name='src_tab_9', schema=TEST_DEFAULT_SCHEMA)],
-                        target_table=Table(name='src_tab_8', schema=TEST_DEFAULT_SCHEMA),
-                        target_columns=['tab_8.col_3=tab_9.col4', 'tab_8.col_4=tab_9.col5'])
-
-DELETE_EXPECTED = Query(procedure='testproc',
-                        operation='DELETE',
-                        target_table=Table(name='src_tab_10', schema=TEST_DEFAULT_SCHEMA))
-
-PROCEDURE_EXPECTED = Procedure(path=procedure_path,
-                               name='testproc',
-                               schema='example',
-                               queries=[INSERT_EXPECTED, UPDATE_EXPECTED, DELETE_EXPECTED])
+from tests.utils import *
 
 
 def test_parse_object_name():
+
+    """
+    Verify that table/procedure string is correctly split into name and schema,
+    and that default schema is added when needed.
+    """
 
     # Ensure that object name gets correctly split and default schema behavior works
     p = Runner(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
@@ -64,70 +19,87 @@ def test_parse_object_name():
 
 def test_get_procedure_name():
 
+    """
+    Verify that procedure name is correctly fetched, split into name and schema,
+    and that default schema is added when needed.
+    """
+
     # Ensure that procedure name gets correctly identified and split
     p = Runner(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
     assert p.get_procedure_name(TEST_PROCEDURE) == ('example', 'testproc')
 
 
+def test_equality_check():
+
+    """
+    Verify that the __eq__(self, other) method is working as expected for Procedure,
+    Statement, and Table objects.
+    """
+
+    # Test equality check for procedures
+    a = Procedure(path='path', name='name', schema='schema',
+                  statements=[
+                      Statement(procedure='proc', operation='op', target_table=Table(name='tab1', schema='schema'),
+                                target_columns=['col1', 'col2'], from_table=[Table(name='tab2', schema='schema')],
+                                join_table=[Table(name='tab2', schema='schema')])])
+
+    b = Procedure(path='path', name='name', schema='schema',
+                  statements=[
+                      Statement(procedure='proc', operation='op', target_table=Table(name='tab1', schema='schema'),
+                                target_columns=['col1', 'col2'], from_table=[Table(name='tab2', schema='schema')],
+                                join_table=[Table(name='tab2', schema='schema')])])
+
+    assert a == b
+
+    # Test equality check for statements
+    c = Statement(procedure='proc', operation='op', target_table=Table(name='tab1', schema='schema'),
+                  target_columns=['col1', 'col2'], from_table=[Table(name='tab2', schema='schema')],
+                  join_table=[Table(name='tab2', schema='schema')])
+
+    d = Statement(procedure='proc', operation='op', target_table=Table(name='tab1', schema='schema'),
+                  target_columns=['col1', 'col2'], from_table=[Table(name='tab2', schema='schema')],
+                  join_table=[Table(name='tab2', schema='schema')])
+
+    assert c == d
+
+    # Test equality check for tables
+    e = Table(name='tab1', schema='schema')
+    f = Table(name='tab1', schema='schema')
+
+    assert e == f
+
+
 def test_parse_procedure():
+    """Run parser on test procedure file and ensure result is correct."""
 
     # Run parser on test procedure file
     processor = Runner(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
     p = processor.parse_str(procedure_path, TEST_PROCEDURE)
 
     # Check equality at Procedure level
-    assert p.name == PROCEDURE_EXPECTED.name
-    assert p.schema == PROCEDURE_EXPECTED.schema
-    assert p.path == PROCEDURE_EXPECTED.path
-
-    assert len(p.queries) == len(PROCEDURE_EXPECTED.queries)
-
-    # Check equality and order at Query level
-    for i, q in enumerate(p.queries):
-        assert PROCEDURE_EXPECTED.queries[i].procedure == q.procedure
-        assert PROCEDURE_EXPECTED.queries[i].operation == q.operation
-        if q.target_columns or PROCEDURE_EXPECTED.queries[i].target_columns:
-            assert PROCEDURE_EXPECTED.queries[i].target_columns == q.target_columns
-
-        # Check equality at Table level
-        assert PROCEDURE_EXPECTED.queries[i].target_table.__dict__ == q.target_table.__dict__
-
-        if q.from_table or PROCEDURE_EXPECTED.queries[i].from_table:
-            for j, t in enumerate(q.from_table):
-                assert PROCEDURE_EXPECTED.queries[i].from_table[j].__dict__ == t.__dict__
-
-        if q.join_table or PROCEDURE_EXPECTED.queries[i].join_table:
-            for j, t in enumerate(q.join_table):
-                assert PROCEDURE_EXPECTED.queries[i].join_table[j].__dict__ == t.__dict__
+    assert p == PROCEDURE_EXPECTED
 
 
 @pytest.mark.parametrize(
     "test_input, dmltype, expected",
-    [(TEST_INSERT_STATEMENT, 'INSERT', INSERT_EXPECTED),
-     (TEST_UPDATE_STATEMENT, 'UPDATE', UPDATE_EXPECTED),
-     (TEST_DELETE_STATEMENT, 'DELETE', DELETE_EXPECTED)]
+    [(TEST_INSERT_STATEMENT, 'INSERT', INSERT_STATEMENT_EXPECTED),
+     (TEST_UPDATE_STATEMENT, 'UPDATE', UPDATE_STATEMENT_EXPECTED),
+     (TEST_DELETE_STATEMENT, 'DELETE', DELETE_STATEMENT_EXPECTED)]
 )
 def test_parse_statement(test_input, dmltype, expected):
+
+    """
+    Run parser on test statements and ensure results are correct.
+
+    :param test_input: test statement
+    :param dmltype: DML type of the statement tested
+    :param expected: expected Statement object to compare with parser result
+    """
 
     mapper = Mapper(TEST_DELIMITER, TEST_MODE)
     p = Runner(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
     r = p.parse_statement(dmltype=dmltype, s=test_input, mapper=mapper)
-
-    # Check equality at Query level
-    assert expected.operation == r.operation
-    if expected.target_columns or r.target_columns:
-        assert expected.target_columns == r.target_columns
-
-    # Check equality at Table level
-    assert expected.target_table.__dict__ == r.target_table.__dict__
-
-    if r.from_table or expected.from_table:
-        for j, t in enumerate(r.from_table):
-            assert expected.from_table[j].__dict__ == t.__dict__
-
-    if r.join_table or expected.join_table:
-        for j, t in enumerate(r.join_table):
-            assert expected.join_table[j].__dict__ == t.__dict__
+    assert r == expected
 
 
 def test_get_delete_table():
