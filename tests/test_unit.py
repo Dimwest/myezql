@@ -51,6 +51,10 @@ def test_equality_check():
 
     assert a == b
 
+    # Test inequality check for procedures
+    b.path = 'other_path'
+    assert a != b
+
     # Test equality check for statements
     c = Statement(procedure='proc', operation='op', target_table=Table(name='tab1', schema='schema'),
                   target_columns=['col1', 'col2'], from_table=[Table(name='tab2', schema='schema')],

@@ -4,6 +4,7 @@ from utils.logging import *
 from parse.runner import Runner
 from output.json import to_json
 from output.cmd import beautify
+from output.mermaid import Mermaid
 from config import *
 import os
 
@@ -11,11 +12,12 @@ import os
 class MyEzQl(object):
 
     @with_logging
-    def show(self, i: str, o: str='', ds='', dl=';;', p: bool=False) -> None:
+    def show(self, i: str, ds='', dl=';;', p: bool=False, o: str='') -> None:
 
         if o:
             if not (is_pathname_valid(o) and is_path_creatable(o) and o.endswith('.json')):
-                logger.error(f'Error: {o} is whether not valid, or cannot be created')
+                logger.error(f'Error: {o} is whether not a valid .json file name, '
+                             f'or cannot be created')
                 return
 
         if not ds:
@@ -36,6 +38,11 @@ class MyEzQl(object):
         if o:
             to_json(processor.results, o)
             logger.info(f'-> {o} successfully saved')
+
+    def draw(self, i: str, ds='', dl=';;', p: bool=False, o: str=''):
+
+        m = Mermaid(processor.results)
+        m.tables_chart('/Users/mtalbi/Desktop/test.html')
 
 
 if __name__ == '__main__':
