@@ -25,6 +25,13 @@ class Runner:
         self.proc_regex = procedure_regex(self.delimiter)
         self.default_schema = default_schema
         self.mode = mode
+
+    def run(self, path):
+
+        if os.path.isdir(path):
+            self.parse_dir(path)
+        elif os.path.isfile(path):
+            self.results = self.parse_file(path)
     
     def parse_dir(self, dir_path: str) -> None:
 
