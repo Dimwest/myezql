@@ -1,5 +1,5 @@
 import fire
-from config import *
+from configparser import ConfigParser
 from utils.paths import *
 from utils.logging import *
 from parse.runner import Runner
@@ -11,18 +11,20 @@ from output.mermaid import Mermaid
 class MyEzQl(object):
 
     @with_logging
-    def parse(self, i: str, ds='', dl=';;', p: bool=True, json: str='', chart: str='') -> None:
+    def parse(self, i: str, ds='', dl='', mode: str='', json: str='', chart: str='') -> None:
 
         """
         Core function parsing input file or directory and pretty-printing results
         in the terminal.
-        Provides various parsing and output options to tweak depending on the needs.
+        Provides various parsing and output options to tweak according to needs.
 
         :param i: path to input .sql file or directory containing .sql files
 
         :param ds: default schema, can be set in config.py for convenience purpose
 
         :param dl: delimiter, defaults to ;;
+
+        :param mode: parsing mode, can be 'procedure', 'ddl', or 'select'
 
         :param p: procedure parsing mode, if True, looks for create procedure statements
         and parses all supported DDL statements inside of them, if False, simply looks
@@ -35,20 +37,30 @@ class MyEzQl(object):
         no output file is created
         """
 
+        # Read config
+        parser = ConfigParser()
+        parser.read('config.ini')
+
         # Validate input and output paths
         validate_input_path(i)
         validate_output_path(json, 'json')
         validate_output_path(chart, 'html')
 
-        # Set default schema to config.py value if not given
-        if not ds:
-            ds = DEFAULT_SCHEMA
+        # Set default schema to config value if not provided
+        ds = parser['parser_config']['default_schema'] if not ds else ds
 
-        # Set parsing type (there might be more options in the future)
-        p = 'procedure' if p else 'ddl'
+        # Set delimiter to config value if not provided
+        dl = parser['parser_config']['delimiter'] if not dl else dl
+
+        # Set parsing mode to config value if not provided
+        mode = parser['parser_config']['default_mode'] if not mode else mode
 
         # Create and run parser
-        processor = Runner(default_schema=ds, delimiter=dl, mode=p)
+        logger.info(f'\nStart parsing with parameters:'
+                    f'\n  default schema --> {ds}'
+                    f'\n  delimiter      --> {dl}'
+                    f'\n  parsing mode   --> {mode}\n')
+        processor = Runner(default_schema=ds, delimiter=dl, mode=mode)
         processor.run(i)
 
         # Pretty print results
