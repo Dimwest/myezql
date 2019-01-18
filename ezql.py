@@ -60,20 +60,20 @@ class MyEzQl(object):
                     f'\n  default schema --> {ds}'
                     f'\n  delimiter      --> {dl}'
                     f'\n  parsing mode   --> {mode}\n')
-        processor = Runner(default_schema=ds, delimiter=dl, mode=mode)
-        processor.run(i)
+        runner = Runner(default_schema=ds, delimiter=dl, mode=mode)
+        runner.run(i)
 
         # Pretty print results
-        beautify(processor.results)
+        beautify(runner.results)
 
         # If .json output required, create it
         if json:
-            to_json(processor.results, json)
+            to_json(runner.results, json)
             logger.info(f'-> {json} successfully saved')
 
         # If .html flowchart output required, create it
         if chart:
-            m = Mermaid(processor.results)
+            m = Mermaid(runner.results)
             m.tables_chart(chart)
             logger.info(f'-> {chart} successfully saved')
 
