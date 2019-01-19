@@ -10,6 +10,7 @@ from parse.runner import Runner
      (';', 'ddl', delete_path, [PARSE_FILE_DELETE_EXPECTED]),
      (';', 'ddl', update_path, [PARSE_FILE_UPDATE_EXPECTED]),
      (';', 'ddl', insert_path, [PARSE_FILE_INSERT_EXPECTED]),
+     (';', 'ddl', truncate_path, [PARSE_FILE_TRUNCATE_EXPECTED]),
      (';;', 'procedure', procedure_path, [PARSE_FILE_PROCEDURE_EXPECTED])]
 )
 def test_run_file(delimiter, mode, path, expected):
@@ -25,5 +26,6 @@ def test_run_file(delimiter, mode, path, expected):
 
     p = Runner(TEST_DEFAULT_SCHEMA, delimiter, mode)
     p.run(path)
+    assert len(p.results) == len(expected)
     for r in p.results:
         assert r in expected

@@ -62,8 +62,9 @@ python3 ezql.py show --i /my/path.sql --o /output/file.json
 - [x] Improve project structure
 - [x] Add type hints
 
-#### Tests:
-- [ ] Finish unit and e2e testing
+#### Tests / build:
+- [ ] Add Travis CI setup
+- [ ] Finish unit and e2e testing, add coverage report
 - [ ] Add more cases to all tests
 - [ ] Run real life test at large scale, verify manually
 - [x] Introduce end-to-end testing of processing
@@ -72,9 +73,9 @@ python3 ezql.py show --i /my/path.sql --o /output/file.json
 #### Tool functionalities:
 - [ ] Analysis features: table/function childs, parents, etc.
 - [ ] Log execution summary (return results and run summary from logging decorator)
-- [ ] Add proper config file
 - [ ] Add install script
 - [ ] Store JSONs in local TinyDB
+- [x] Add proper config file
 - [x] Add HTML flowchart creation using Mermaid
 - [x] New DDL statements
 - [x] Pass default schema via cmd

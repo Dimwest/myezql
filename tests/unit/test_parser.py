@@ -18,6 +18,7 @@ def test_parse_dir(delimiter, mode, expected):
     # Test directory parsing
     p = Runner(TEST_DEFAULT_SCHEMA, delimiter, mode)
     p.parse_dir(test_dir_path)
+    assert len(p.results) == len(expected)
     for r in p.results:
         assert r in expected
 
@@ -27,6 +28,7 @@ def test_parse_dir(delimiter, mode, expected):
     [(';', 'ddl', delete_path, [PARSE_FILE_DELETE_EXPECTED]),
      (';', 'ddl', update_path, [PARSE_FILE_UPDATE_EXPECTED]),
      (';', 'ddl', insert_path, [PARSE_FILE_INSERT_EXPECTED]),
+     (';', 'ddl', truncate_path, [PARSE_FILE_TRUNCATE_EXPECTED]),
      (';;', 'procedure', procedure_path, [PARSE_FILE_PROCEDURE_EXPECTED])]
 )
 def test_parse_file(delimiter, mode, path, expected):
@@ -61,7 +63,8 @@ def test_parse_procedure():
     "test_input, dmltype, expected",
     [(TEST_INSERT_STATEMENT, 'INSERT', PARSE_STATEMENT_INSERT_EXPECTED),
      (TEST_UPDATE_STATEMENT, 'UPDATE', PARSE_STATEMENT_UPDATE_EXPECTED),
-     (TEST_DELETE_STATEMENT, 'DELETE', PARSE_STATEMENT_DELETE_EXPECTED)]
+     (TEST_DELETE_STATEMENT, 'DELETE', PARSE_STATEMENT_DELETE_EXPECTED),
+     (TEST_TRUNCATE_STATEMENT, 'TRUNCATE', PARSE_STATEMENT_TRUNCATE_EXPECTED)]
 )
 def test_parse_statement(test_input, dmltype, expected):
 
