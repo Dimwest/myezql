@@ -41,18 +41,5 @@ class Mermaid:
         with open(path, 'w') as outfile:
             outfile.write(str(self.soup))
 
-    def functions_chart(self) -> None:
-
-        for p in self.results:
-            self.functions_flow.append(f"{self.results[p]['name']}(({self.results[p]['name']}));")
-            for q in self.results[p]['queries']:
-                if q['target_table']:
-                    arrow = f"{self.results[p]['name']}-->|{q['operation']}|{q['target_table']};"
-                    if arrow not in self.functions_flow:
-                        self.functions_flow.append(arrow)
-
-        self.functions_flow = list(set(self.functions_flow))
-        self.functions_flow.insert(0, self.graph_type)
-        self.functions_flow = '\n'.join(self.functions_flow)
 
 

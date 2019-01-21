@@ -56,9 +56,9 @@ python3 ezql.py show --i /my/path.sql --o /output/file.json
 
 
 #### Refactoring:
+- [ ] Replace unnecessary SQL objects by JSON object
 - [ ] Refactor output functions
 - [ ] Improve logging, introduce verbose arg
-- [x] Write \_\_eq\_\_() for sql.objects, rename them, update tests accordingly
 - [x] Improve project structure
 - [x] Add type hints
 
