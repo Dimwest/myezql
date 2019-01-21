@@ -9,12 +9,13 @@ class Mapper:
 
     def __init__(self, delimiter, mode):
 
+        # TODO -> Rewrite with DRY in mind **facepalm**
         INSERT_REGEX = insert_regex(delimiter) if mode == 'ddl' else insert_regex(';')
         REPLACE_REGEX = replace_regex(delimiter) if mode == 'ddl' else replace_regex(';')
         UPDATE_REGEX = update_regex(delimiter) if mode == 'ddl' else update_regex(';')
         DELETE_REGEX = delete_regex(delimiter) if mode == 'ddl' else delete_regex(';')
         CREATE_TABLE_REGEX = create_table_regex(delimiter) if mode == 'ddl' else create_table_regex(';')
-        DROP_TABLE_REGEX = drop_table_regex(delimiter) if mode == 'ddl' else create_table_regex(';')
+        DROP_TABLE_REGEX = drop_table_regex(delimiter) if mode == 'ddl' else drop_table_regex(';')
         TRUNCATE_REGEX = truncate_regex(delimiter) if mode == 'ddl' else truncate_regex(';')
 
         self.extract_regexes = \

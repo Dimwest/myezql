@@ -56,24 +56,28 @@ python3 ezql.py show --i /my/path.sql --o /output/file.json
 
 
 #### Refactoring:
-- [ ] Replace as much recursion as possible by parser methods
+- [ ] Replace unnecessary SQL objects by JSON object
 - [ ] Refactor output functions
-- [ ] Write \_\_eq\_\_() for sql.objects, rename them, update tests accordingly
-- [ ] Improve logging
+- [ ] Improve logging, introduce verbose arg
 - [x] Improve project structure
 - [x] Add type hints
 
-#### Tests:
-- [ ] Finish smaller units testing
-- [ ] Add more cases
-- [x] Add end-to-end testing of processing
+#### Tests / build:
+- [ ] Add Travis CI setup
+- [ ] Finish unit and e2e testing, add coverage report
+- [ ] Add more cases to all tests
+- [ ] Run real life test at large scale, verify manually
+- [x] Introduce end-to-end testing of processing
+- [x] Add most important unit tests
 
 #### Tool functionalities:
-- [ ] Improve output
-- [ ] New DDL statements
-- [ ] Add proper config file
+- [ ] Analysis features: table/function childs, parents, etc.
+- [ ] Log execution summary (return results and run summary from logging decorator)
 - [ ] Add install script
 - [ ] Store JSONs in local TinyDB
+- [x] Add proper config file
+- [x] Add HTML flowchart creation using Mermaid
+- [x] New DDL statements
 - [x] Pass default schema via cmd
 - [x] Add "all DDL" and "all procedures" modes
 - [x] Add multiprocessing at file parsing level

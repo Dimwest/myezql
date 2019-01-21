@@ -53,6 +53,9 @@ CREATE PROCEDURE example.testproc(IN test_arg int unsigned)
 
   DELETE FROM src_tab_10 tab_10 WHERE col_1 < 100;
 
+  TRUNCATE TABLE src_tab_11;
+
+
 END
 
 ;;

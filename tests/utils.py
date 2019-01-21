@@ -1,10 +1,12 @@
 from sql.objects import Procedure, Statement, Table
 from sqlparse import format as fmt
 
-procedure_path = './tests/resources/procedure.sql'
-insert_path = './tests/resources/insert.sql'
-update_path = './tests/resources/update.sql'
-delete_path = './tests/resources/delete.sql'
+test_dir_path = './tests/_resources/'
+procedure_path = './tests/_resources/procedure.sql'
+insert_path = './tests/_resources/insert.sql'
+update_path = './tests/_resources/update.sql'
+delete_path = './tests/_resources/delete.sql'
+truncate_path = './tests/_resources/truncate.sql'
 
 # NB: Antlr grammar is case-sensitive. Input has to be upper case.
 # Open and upper case test procedure file
@@ -23,27 +25,40 @@ with open(update_path, 'r') as file:
 with open(delete_path, 'r') as file:
     TEST_DELETE_STATEMENT = fmt(file.read().upper(), strip_comments=True).strip()
 
+# Open and upper case test truncate statement
+with open(truncate_path, 'r') as file:
+    TEST_TRUNCATE_STATEMENT = fmt(file.read().upper(), strip_comments=True).strip()
+
+# test default parameters
 TEST_DEFAULT_SCHEMA = 'default_schema'
 TEST_DELIMITER = ';;'
 TEST_MODE = 'procedure'
 
-INSERT_STATEMENT_EXPECTED = Statement(procedure=None,
-                                      operation='INSERT',
-                                      from_table=[Table(name='src_tab_1', schema=TEST_DEFAULT_SCHEMA)],
-                                      join_table=[Table(name='src_tab_2', schema=TEST_DEFAULT_SCHEMA),
+# Define parse_statement results
+
+PARSE_STATEMENT_INSERT_EXPECTED = Statement(procedure=None,
+                                            operation='INSERT',
+                                            from_table=[Table(name='src_tab_1', schema=TEST_DEFAULT_SCHEMA)],
+                                            join_table=[Table(name='src_tab_2', schema=TEST_DEFAULT_SCHEMA),
                                                   Table(name='src_tab_3', schema=TEST_DEFAULT_SCHEMA)],
-                                      target_table=Table(name='mytable', schema=TEST_DEFAULT_SCHEMA),
-                                      target_columns=['col_1', 'col_2', 'col_3', 'col_4', 'col_5', 'col_6', 'col_7'])
+                                            target_table=Table(name='mytable', schema=TEST_DEFAULT_SCHEMA),
+                                            target_columns=['col_1', 'col_2', 'col_3', 'col_4', 'col_5', 'col_6', 'col_7'])
 
-UPDATE_STATEMENT_EXPECTED = Statement(procedure=None,
-                                      operation='UPDATE',
-                                      join_table=[Table(name='src_tab_9', schema=TEST_DEFAULT_SCHEMA)],
-                                      target_table=Table(name='src_tab_8', schema=TEST_DEFAULT_SCHEMA),
-                                      target_columns=['tab_8.col_3=tab_9.col4', 'tab_8.col_4=tab_9.col5'])
+PARSE_STATEMENT_UPDATE_EXPECTED = Statement(procedure=None,
+                                            operation='UPDATE',
+                                            join_table=[Table(name='src_tab_9', schema=TEST_DEFAULT_SCHEMA)],
+                                            target_table=Table(name='src_tab_8', schema=TEST_DEFAULT_SCHEMA),
+                                            target_columns=['tab_8.col_3=tab_9.col4', 'tab_8.col_4=tab_9.col5'])
 
-DELETE_STATEMENT_EXPECTED = Statement(procedure=None,
-                                      operation='DELETE',
-                                      target_table=Table(name='src_tab_10', schema=TEST_DEFAULT_SCHEMA))
+PARSE_STATEMENT_DELETE_EXPECTED = Statement(procedure=None,
+                                            operation='DELETE',
+                                            target_table=Table(name='src_tab_10', schema=TEST_DEFAULT_SCHEMA))
+
+PARSE_STATEMENT_TRUNCATE_EXPECTED = Statement(procedure=None,
+                                              operation='TRUNCATE',
+                                              target_table=Table(name='src_tab_11', schema=TEST_DEFAULT_SCHEMA))
+
+# Define parse_file result components for procedure mode
 
 INSERT_EXPECTED = Statement(procedure='testproc',
                             operation='INSERT',
@@ -63,9 +78,112 @@ DELETE_EXPECTED = Statement(procedure='testproc',
                             operation='DELETE',
                             target_table=Table(name='src_tab_10', schema=TEST_DEFAULT_SCHEMA))
 
+TRUNCATE_EXPECTED = Statement(procedure='testproc',
+                              operation='TRUNCATE',
+                              target_table=Table(name='src_tab_11', schema=TEST_DEFAULT_SCHEMA))
 
-PROCEDURE_EXPECTED = Procedure(path=procedure_path,
-                               name='testproc',
-                               schema='example',
-                               statements=[INSERT_EXPECTED, UPDATE_EXPECTED, DELETE_EXPECTED])
+# Define parse_file results for procedure mode
 
+PARSE_FILE_PROCEDURE_EXPECTED = Procedure(path=procedure_path,
+                                          name='testproc',
+                                          schema='example',
+                                          statements=[INSERT_EXPECTED,
+                                                      UPDATE_EXPECTED,
+                                                      DELETE_EXPECTED,
+                                                      TRUNCATE_EXPECTED])
+
+# Define parse_file results for ddl mode
+
+PARSE_FILE_DELETE_EXPECTED = Procedure(path=delete_path, name=delete_path, schema='',
+                                       statements=[Statement(
+                                           procedure=delete_path,
+                                           operation='DELETE',
+                                           target_table=Table(name='src_tab_10', schema=TEST_DEFAULT_SCHEMA))])
+
+
+PARSE_FILE_TRUNCATE_EXPECTED = Procedure(path=truncate_path, name=truncate_path, schema='',
+                                         statements=[Statement(
+                                             procedure=truncate_path,
+                                             operation='TRUNCATE',
+                                             target_table=Table(name='src_tab_11', schema=TEST_DEFAULT_SCHEMA))])
+
+
+PARSE_FILE_INSERT_EXPECTED = Procedure(path=insert_path, name=insert_path, schema='',
+                                       statements=[
+                                           Statement(procedure=insert_path,
+                                                     operation='INSERT',
+                                                     from_table=[Table(name='src_tab_1', schema=TEST_DEFAULT_SCHEMA)],
+                                                     join_table=[Table(name='src_tab_2', schema=TEST_DEFAULT_SCHEMA),
+                                                                 Table(name='src_tab_3', schema=TEST_DEFAULT_SCHEMA)],
+                                                     target_table=Table(name='mytable', schema=TEST_DEFAULT_SCHEMA),
+                                                     target_columns=[
+                                                         'col_1', 'col_2', 'col_3', 'col_4', 'col_5', 'col_6', 'col_7'
+                                                     ]
+                                                     )
+                                       ]
+                                       )
+
+PARSE_FILE_UPDATE_EXPECTED = Procedure(path=update_path, name=update_path, schema='',
+                                       statements=[
+                                           Statement(procedure=update_path,
+                                                     operation='UPDATE',
+                                                     join_table=[Table(name='src_tab_9', schema=TEST_DEFAULT_SCHEMA)],
+                                                     target_table=Table(name='src_tab_8', schema=TEST_DEFAULT_SCHEMA),
+                                                     target_columns=['tab_8.col_3=tab_9.col4', 'tab_8.col_4=tab_9.col5']
+                                                     )
+                                       ]
+                                       )
+
+# Define parse_dir results for ddl mode
+
+DIR_PROCEDURE_EXPECTED_DELETE = Statement(
+    procedure=procedure_path,
+    operation='DELETE',
+    target_table=Table(name='src_tab_10', schema=TEST_DEFAULT_SCHEMA)
+)
+
+
+DIR_PROCEDURE_EXPECTED_TRUNCATE = Statement(
+    procedure=procedure_path,
+    operation='TRUNCATE',
+    target_table=Table(name='src_tab_11', schema=TEST_DEFAULT_SCHEMA)
+)
+
+DIR_PROCEDURE_EXPECTED_INSERT = Statement(procedure=procedure_path,
+                                          operation='INSERT',
+                                          from_table=[Table(name='src_tab_1', schema=TEST_DEFAULT_SCHEMA)],
+                                          join_table=[Table(name='src_tab_2', schema=TEST_DEFAULT_SCHEMA),
+                                                      Table(name='src_tab_3', schema=TEST_DEFAULT_SCHEMA)],
+                                          target_table=Table(name='mytable', schema=TEST_DEFAULT_SCHEMA),
+                                          target_columns=[
+                                              'col_1', 'col_2', 'col_3', 'col_4', 'col_5', 'col_6', 'col_7'
+                                          ]
+                                          )
+
+DIR_PROCEDURE_EXPECTED_UPDATE = Statement(procedure=procedure_path,
+                                          operation='UPDATE',
+                                          join_table=[Table(name='src_tab_9', schema=TEST_DEFAULT_SCHEMA)],
+                                          target_table=Table(name='src_tab_8', schema=TEST_DEFAULT_SCHEMA),
+                                          target_columns=['tab_8.col_3=tab_9.col4', 'tab_8.col_4=tab_9.col5'])
+
+DIR_PROCEDURE_EXPECTED = Procedure(path=procedure_path, name=procedure_path, schema='',
+                                   statements=[
+                                       DIR_PROCEDURE_EXPECTED_INSERT,
+                                       DIR_PROCEDURE_EXPECTED_UPDATE,
+                                       DIR_PROCEDURE_EXPECTED_DELETE,
+                                       DIR_PROCEDURE_EXPECTED_TRUNCATE
+                                   ]
+                                   )
+
+
+PARSE_DIR_EXPECTED_DDL = [
+    PARSE_FILE_TRUNCATE_EXPECTED,
+    PARSE_FILE_DELETE_EXPECTED,
+    PARSE_FILE_INSERT_EXPECTED,
+    DIR_PROCEDURE_EXPECTED,
+    PARSE_FILE_UPDATE_EXPECTED
+]
+
+# Define parse_dir results for procedure mode
+
+PARSE_DIR_EXPECTED_PROC = [PARSE_FILE_PROCEDURE_EXPECTED]

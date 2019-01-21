@@ -25,6 +25,13 @@ class Runner:
         self.proc_regex = procedure_regex(self.delimiter)
         self.default_schema = default_schema
         self.mode = mode
+
+    def run(self, path):
+
+        if os.path.isdir(path):
+            self.parse_dir(path)
+        elif os.path.isfile(path):
+            self.results = self.parse_file(path)
     
     def parse_dir(self, dir_path: str) -> None:
 
@@ -43,7 +50,7 @@ class Runner:
             # Loop on .sql files
             for name in files:
                 if name.endswith('.sql'):
-                    sql_files.append(f'{root}{name}')
+                    sql_files.append(f'{root}/{name}')
         results = pool.map(self.parse_file, sql_files)
         self.results = [p for file in results for p in file]
 
