@@ -50,7 +50,7 @@ class Runner:
             # Loop on .sql files
             for name in files:
                 if name.endswith('.sql'):
-                    sql_files.append(f'{root}{name}')
+                    sql_files.append(f'{root}/{name}')
         results = pool.map(self.parse_file, sql_files)
         self.results = [p for file in results for p in file]
 
