@@ -3,7 +3,6 @@ from configparser import ConfigParser
 from utils.paths import *
 from utils.logging import *
 from parse.runner import Runner
-from output.json import to_json
 from output.cmd import beautify
 from output.mermaid import Mermaid
 
@@ -11,7 +10,7 @@ from output.mermaid import Mermaid
 class MyEzQl(object):
 
     @with_logging
-    def parse(self, i: str, ds='', dl='', mode: str='', json: str='', chart: str='') -> None:
+    def parse(self, i: str, ds='', dl='', mode: str='', chart: str='') -> None:
 
         """
         Core function parsing input file or directory and pretty-printing results
@@ -24,14 +23,7 @@ class MyEzQl(object):
 
         :param dl: delimiter, defaults to ;;
 
-        :param mode: parsing mode, can be 'procedure', 'ddl', or 'select'
-
-        :param p: procedure parsing mode, if True, looks for create procedure statements
-        and parses all supported DDL statements inside of them, if False, simply looks
-        for all support DDL statements in the file(s) parsed
-
-        :param json: path to output .json file, defaults to '', in which case no .json
-        is created
+        :param mode: parsing mode, can be 'procedure' or 'ddl'
 
         :param chart: path to output .html flowchart, defaults to '', in which case
         no output file is created
@@ -43,7 +35,6 @@ class MyEzQl(object):
 
         # Validate input and output paths
         validate_input_path(i)
-        validate_output_path(json, 'json')
         validate_output_path(chart, 'html')
 
         # Set default schema to config value if not provided
@@ -55,27 +46,23 @@ class MyEzQl(object):
         # Set parsing mode to config value if not provided
         mode = parser['parser_config']['default_mode'] if not mode else mode
 
-        # Create and run parser
         logger.info(f'\nStart parsing with parameters:'
                     f'\n  default schema --> {ds}'
                     f'\n  delimiter      --> {dl}'
                     f'\n  parsing mode   --> {mode}\n')
+
+        # Configure and run parser
         runner = Runner(default_schema=ds, delimiter=dl, mode=mode)
         runner.run(i)
 
         # Pretty print results
         beautify(runner.results)
 
-        # If .json output required, create it
-        if json:
-            to_json(runner.results, json)
-            logger.info(f'-> {json} successfully saved')
-
         # If .html flowchart output required, create it
         if chart:
             m = Mermaid(runner.results)
             m.tables_chart(chart)
-            logger.info(f'-> {chart} successfully saved')
+            logger.info(f'{chart} successfully saved')
 
 
 if __name__ == '__main__':

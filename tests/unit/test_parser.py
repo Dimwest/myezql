@@ -18,9 +18,9 @@ def test_parse_dir(delimiter, mode, expected):
     # Test directory parsing
     p = Runner(TEST_DEFAULT_SCHEMA, delimiter, mode)
     p.parse_dir(test_dir_path)
+    for x in p.results:
+        assert x in expected
     assert len(p.results) == len(expected)
-    for r in p.results:
-        assert r in expected
 
 
 @pytest.mark.parametrize(

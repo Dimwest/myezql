@@ -3,7 +3,6 @@ import os
 import sys
 
 import logging
-from time import time
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
