@@ -3,14 +3,12 @@ import re
 import multiprocessing as mp
 from parse.regex import procedure_regex, NAME_REGEX
 from sqlparse import format as fmt
-from sql.objects import Procedure
 from antlr4 import ParserRuleContext, TerminalNode, ErrorNode, \
     InputStream, CommonTokenStream
 from parse.lexer import MySqlLexer
 from parse.parser import MySqlParser
 from parse.mapper import Mapper
-from sql.objects import Statement, Table
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 
 
 class Runner:
@@ -50,11 +48,11 @@ class Runner:
             # Loop on .sql files
             for name in files:
                 if name.endswith('.sql'):
-                    sql_files.append(f'{root}/{name}')
+                    sql_files.append(f'{root}/{name}'.replace('//', '/'))
         results = pool.map(self.parse_file, sql_files)
         self.results = [p for file in results for p in file]
 
-    def parse_file(self, path: str) -> List[Procedure]:
+    def parse_file(self, path: str) -> List[Dict]:
 
         """
         Finds and parses all procedures in SQL file.
@@ -79,7 +77,7 @@ class Runner:
 
         return results
 
-    def parse_str(self, path: str, p: str) -> Procedure:
+    def parse_str(self, path: str, p: str) -> Dict:
 
         """
         Gets all configured DML statements inside a procedure body,
@@ -96,7 +94,13 @@ class Runner:
             schema, name = self.get_procedure_name(p)
         elif self.mode == 'ddl':
             schema, name = '', path
-        proc = Procedure(path, name=name, schema=schema, statements=[])
+        else:
+            raise ValueError('Invalid parsing mode, should be one of: procedure, ddl')
+
+        proc = {'schema': schema,
+                'name': name,
+                'path': path,
+                'statements': []}
 
         mapper = Mapper(self.delimiter, self.mode)
 
@@ -105,8 +109,8 @@ class Runner:
             for s in statements:
                 q = self.parse_statement(dmltype, s, mapper)
                 if q:
-                    q.procedure = name
-                    proc.statements.append(q)
+                    q['procedure'] = name
+                    proc['statements'].append(q)
 
         return proc
 
@@ -142,7 +146,7 @@ class Runner:
 
         return schema, name
 
-    def parse_statement(self, dmltype: str, s: str, mapper: Mapper) -> Statement:
+    def parse_statement(self, dmltype: str, s: str, mapper: Mapper) -> Dict:
 
         """
         Cleans DML statement, creates parsing objects, and returns a
@@ -203,7 +207,7 @@ class Runner:
         return target_columns
 
     def parse_create_table(self, tree: ParserRuleContext, dmltype: str) \
-            -> Optional[Statement]:
+            -> Dict:
 
         """
         Parse the three types of CREATE TABLE statements existing in MySQL 5.6,
@@ -214,32 +218,32 @@ class Runner:
         :return: Query object containing the statement information
         """
 
-        q = Statement()
-        q.target_table = self.get_target_table(tree)
+        q = dict()
+        q['target_table'] = self.get_target_table(tree)
 
         # Parse create table column statements
         if isinstance(tree, MySqlParser.ColumnCreateTableContext):
-            q.operation = f'{dmltype} COLUMNS'
-            q.target_columns = self.get_create_table_columns(tree)
+            q['operation'] = f'{dmltype} COLUMNS'
+            q['target_columns'] = self.get_create_table_columns(tree)
 
         # Parse create table query statements
         elif isinstance(tree, MySqlParser.QueryCreateTableContext):
-            q.operation = f'{dmltype} QUERY'
-            q.from_table = self.get_source_tables_insert(tree, 'from')
-            q.join_table = self.get_source_tables_insert(tree, 'join')
+            q['operation'] = f'{dmltype} QUERY'
+            q['from_table'] = self.get_source_tables_insert(tree, 'from')
+            q['join_table'] = self.get_source_tables_insert(tree, 'join')
             try:
                 query = tree.selectStatement().querySpecification()
             except AttributeError as e:
                 query = tree.selectStatement().queryExpression().querySpecification()
-            q.target_columns = query.selectElements().getText().lower().split(',')
+            q['target_columns'] = query.selectElements().getText().lower().split(',')
 
         # Parse create table like statements
         elif isinstance(tree, MySqlParser.CopyCreateTableContext):
-            q.operation = f'{dmltype} LIKE'
+            q['operation'] = f'{dmltype} LIKE'
             target = self.parse_object_name(tree.tableName(0).getText().lower())
-            q.target_table = Table(name=target[1], schema=target[0])
+            q['target_table'] = {'schema': target[0], 'name': target[1]}
             source = self.parse_object_name(tree.tableName(1).getText().lower())
-            q.from_table = [Table(name=source[1], schema=source[0])]
+            q['from_table'] = [{'schema': source[0], 'name': source[1]}]
 
         return q
 
@@ -262,7 +266,7 @@ class Runner:
 
         return columns
 
-    def parse_truncate(self, tree: ParserRuleContext, dmltype: str) -> Statement:
+    def parse_truncate(self, tree: ParserRuleContext, dmltype: str) -> Dict:
 
         """
         Parse target table from TRUNCATE statement.
@@ -273,11 +277,11 @@ class Runner:
         :return: Query object containing the statement information
         """
 
-        q = Statement(operation=dmltype)
-        q.target_table = self.get_target_table(tree)
+        q = {'operation': dmltype,
+             'target_table': self.get_target_table(tree)}
         return q
 
-    def parse_drop_table(self, tree: ParserRuleContext, dmltype: str) -> Statement:
+    def parse_drop_table(self, tree: ParserRuleContext, dmltype: str) -> Dict:
 
         """
         Parse target table from DROP TABLE statement.
@@ -288,13 +292,13 @@ class Runner:
         :return: Query object containing the statement information
         """
 
-        q = Statement(operation=dmltype)
+        q = {'operation': dmltype}
         target = self.parse_object_name(tree.tables().getText().lower())
-        q.target_table = Table(name=target[1], schema=target[0])
+        q['target_table'] = {'name': target[1], 'schema': target[0]}
         return q
 
     def parse_update(self, tree: ParserRuleContext, dmltype: str) \
-            -> Optional[Statement]:
+            -> Optional[Dict]:
 
         """
         Parses target table, source table(s) and target columns from
@@ -306,18 +310,17 @@ class Runner:
         :return: Query object containing the statement information
         """
 
-        q = Statement(operation=dmltype)
-
-        q.target_table = self.get_target_table(tree)
-        q.join_table = self.get_source_tables_update(tree)
-        q.target_columns = self.get_updated_columns(tree)
+        q = {'operation': dmltype,
+             'target_table': self.get_target_table(tree),
+             'join_table': self.get_source_tables_update(tree),
+             'target_columns': self.get_updated_columns(tree)}
 
         # TODO -> Get rid of this if statement
-        if q.target_table and q.join_table:
+        if q['target_table'] and q['join_table']:
             return q
 
     def get_inserted_tables(self, tree: ParserRuleContext) \
-            -> Tuple[List[Table], List[Table]]:
+            -> Tuple[List[Dict], List[Dict]]:
 
         """
         Gets all source tables from an INSERT statement.
@@ -332,7 +335,7 @@ class Runner:
                 join_table = self.get_source_tables_insert(child, 'join')
                 return from_table, join_table
 
-    def parse_insert(self, tree: ParserRuleContext, dmltype: str) -> Statement:
+    def parse_insert(self, tree: ParserRuleContext, dmltype: str) -> Dict:
 
         """
         Parses target table, source table(s) and target columns from
@@ -343,15 +346,17 @@ class Runner:
         :return: Query object containing the statement information
         """
 
-        q = Statement(operation=dmltype)
-        q.target_table = self.get_target_table(tree)
-        q.from_table, q.join_table = self.get_inserted_tables(tree)
-        q.target_columns = self.get_inserted_columns(tree)
+        from_table, join_table = self.get_inserted_tables(tree)
+        q = {'operation': dmltype,
+             'target_table': self.get_target_table(tree),
+             'from_table': from_table,
+             'join_table': join_table,
+             'target_columns': self.get_inserted_columns(tree)}
 
         return q
 
     def get_delete_table(self, tree: ParserRuleContext) \
-            -> Optional[List[Table]]:
+            -> Optional[List[Dict]]:
 
         """
         Gets the table name from a DELETE statement.
@@ -364,7 +369,7 @@ class Runner:
             if isinstance(child, MySqlParser.DeleteStatementValueContext):
                 return self.get_source_tables_insert(child, 'from')
 
-    def parse_delete(self, tree: ParserRuleContext, dmltype: str) -> Statement:
+    def parse_delete(self, tree: ParserRuleContext, dmltype: str) -> Dict:
 
         """
         Parses target table name from a DELETE statement.
@@ -374,13 +379,13 @@ class Runner:
         :return: Query object containing the statement information
         """
 
-        q = Statement(operation=dmltype)
-        q.target_table = self.get_target_table(tree)
+        q = {'operation': dmltype,
+             'target_table': self.get_target_table(tree)}
 
         return q
 
     def get_source_tables_update(self, tree: ParserRuleContext) \
-            -> List[Table]:
+            -> List[Dict]:
 
         """
         Collects recursively table names in JOIN clauses of an
@@ -401,7 +406,7 @@ class Runner:
         return tables
 
     def get_source_tables_insert(self, tree: ParserRuleContext, clause: str) \
-            -> List[Table]:
+            -> List[Dict]:
 
         """
         Collects recursively table names in FROM and JOIN clauses in
@@ -432,7 +437,7 @@ class Runner:
                 tables.extend(self.get_source_tables_insert(c, clause))
         return tables
 
-    def get_target_table(self, tree: ParserRuleContext) -> Table:
+    def get_target_table(self, tree: ParserRuleContext) -> Dict:
 
         """
         Walks recursively to the first table name found in a statement AST
@@ -446,12 +451,12 @@ class Runner:
 
             if isinstance(c, MySqlParser.TableNameContext):
                 schema, name = self.parse_object_name(c.getText().lower())
-                t = Table(name, schema)
+                t = {'schema': schema, 'name': name}
                 return t
             elif not (isinstance(c, TerminalNode) or isinstance(c, ErrorNode)):
                 return self.get_target_table(c)
 
-    def get_all_tables(self, tree: ParserRuleContext) -> List[Table]:
+    def get_all_tables(self, tree: ParserRuleContext) -> List[Dict]:
 
         """
         Gets all table names inside a tree, appends them to a list of
@@ -465,7 +470,7 @@ class Runner:
         for c in tree.getChildren():
             if isinstance(c, MySqlParser.TableNameContext):
                 schema, name = self.parse_object_name(c.getText().lower())
-                t = Table(name, schema)
+                t = {'schema': schema, 'name': name}
                 tables.append(t)
             elif isinstance(c, MySqlParser.QueryExpressionContext):
                 c = c.querySpecification()

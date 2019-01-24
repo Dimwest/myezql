@@ -1,30 +1,37 @@
 # MyEzQL
 
-MyEzQl is a Python CLI tool parsing MySQL-syntax files and enabling easier understanding and visualization of data flows 
-described in those files.
+MyEzQl is a Python CLI tool parsing SQL files and enabling easier visualization of data flows 
+by pretty-printing parsing results and exporting them as HTML flowcharts.
 
-## How to
+Although MyEzQl can work fine with most SQL dialects, please keep in mind that its parser 
+has been generated using ANTLR4 and MySQL 5.6 grammar, hence it does NOT support some 
+Postgres statements such as 'WITH' clauses for example. 
+Nested subqueries are however supported.
 
-Read from any SQL file or directory containing SQL files:
+## Tutorial
+
+Read from any SQL file or directory containing SQL files.
 
 ```bash
 python3 ezql.py show --i /my/path.sql
 python3 ezql.py show --i /my/dir
 ```
 
-Here is a sample result:
+Here is a sample terminal output:
 
-![MyEzQL screenshot](README.png?raw=true "MyEzQL screenshot")
+![MyEzQL screenshot](img/cmd.png?raw=true "MyEzQL CLI creenshot")
 
-"Create procedure" statements can be parsed specifically by setting the --p flag to 1 or True.
-If not set, DDL statements will be parsed without being tied to the eventual procedure containing them.
+You can choose to parse "Create Procedure" statements, or simply all DDL statements,
+by setting the --mode flag. Note that DDL statements will not be tied to the procedure
+they belong to when running in DDL mode.
 ```bash
-python3 ezql.py show --i /my/path.sql --p 1
+python3 ezql.py show --i /my/path.sql --mode procedure
+python3 ezql.py show --i /my/path.sql --mode ddl
 ```
 
 Statement delimiter can be specified using the --dl flag.
-If not specified as command line argument, the delimiter will have the value defined in config/config.py. By default, it's ';;'.
-If the --p flag is set to True, this delimiter is used for procedures only, and it is assumed that individual DDL statements inside of the procedure use ';' as delimiter.
+If not specified as command line argument, the delimiter will have the value defined in config/config.py.
+If the --p flag is set to True, this delimiter is used for finding Create Procedure statements only, and it is assumed that individual DDL statements inside of the procedure use ';' as delimiter.
 ```bash
 python3 ezql.py show --i /my/path.sql --dl ';;'
 ```
@@ -35,10 +42,13 @@ If not specified as command line argument, the default schema will have the valu
 python3 ezql.py show --i /my/path.sql --ds default
 ```
 
-Results can optionally be saved in a .json file 
+Results can be saved as Mermaid.js flowcharts in HTML files
 ```bash
-python3 ezql.py show --i /my/path.sql --o /output/file.json
+python3 ezql.py show --i /my/path.sql --chart /output/file.html
 ```
+Here is sample output file:
+
+![MyEzQL screenshot](img/flowchart.png?raw=true "MyEzQL flowchart screenshot")
 
 ## To-do
 
@@ -56,9 +66,9 @@ python3 ezql.py show --i /my/path.sql --o /output/file.json
 
 
 #### Refactoring:
-- [ ] Replace unnecessary SQL objects by JSON object
 - [ ] Refactor output functions
 - [ ] Improve logging, introduce verbose arg
+- [x] Replace unnecessary SQL objects by dictionaries
 - [x] Improve project structure
 - [x] Add type hints
 
@@ -66,7 +76,7 @@ python3 ezql.py show --i /my/path.sql --o /output/file.json
 - [ ] Add Travis CI setup
 - [ ] Finish unit and e2e testing, add coverage report
 - [ ] Add more cases to all tests
-- [ ] Run real life test at large scale, verify manually
+- [ ] Run tests at larger scale w/ manual verification
 - [x] Introduce end-to-end testing of processing
 - [x] Add most important unit tests
 
@@ -74,7 +84,6 @@ python3 ezql.py show --i /my/path.sql --o /output/file.json
 - [ ] Analysis features: table/function childs, parents, etc.
 - [ ] Log execution summary (return results and run summary from logging decorator)
 - [ ] Add install script
-- [ ] Store JSONs in local TinyDB
 - [x] Add proper config file
 - [x] Add HTML flowchart creation using Mermaid
 - [x] New DDL statements
