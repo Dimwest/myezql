@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS src_tab_12;
