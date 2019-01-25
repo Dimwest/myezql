@@ -74,9 +74,10 @@ Here is sample output file:
 
 #### Tests / build:
 - [ ] Add Travis CI setup
-- [ ] Finish unit and e2e testing, add coverage report
-- [ ] Add more cases to all tests
+- [ ] Add coverage report
 - [ ] Run tests at larger scale w/ manual verification
+- [x] Finish unit and e2e testing
+- [x] Test all statements
 - [x] Introduce end-to-end testing of processing
 - [x] Add most important unit tests
 
