@@ -10,7 +10,10 @@ from parse.runner import Runner
      (';', 'ddl', insert_path, [PARSE_FILE_INSERT_EXPECTED]),
      (';', 'ddl', replace_path, [PARSE_FILE_REPLACE_EXPECTED]),
      (';', 'ddl', truncate_path, [PARSE_FILE_TRUNCATE_EXPECTED]),
-     (';', 'ddl', drop_table_path, [PARSE_FILE_DROP_TABLE_EXPECTED])]
+     (';', 'ddl', drop_table_path, [PARSE_FILE_DROP_TABLE_EXPECTED]),
+     (';', 'ddl', create_table_query_path, [PARSE_FILE_CREATE_TABLE_QUERY_EXPECTED]),
+     (';', 'ddl', create_table_columns_path, [PARSE_FILE_CREATE_TABLE_COLUMNS_EXPECTED]),
+     (';', 'ddl', create_table_like_path, [PARSE_FILE_CREATE_TABLE_LIKE_EXPECTED])]
 )
 def test_run_file(delimiter, mode, path, expected):
 
