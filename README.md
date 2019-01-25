@@ -13,8 +13,8 @@ Nested subqueries are however supported.
 Read from any SQL file or directory containing SQL files.
 
 ```bash
-python3 ezql.py show --i /my/path.sql
-python3 ezql.py show --i /my/dir
+python3 ezql.py parse --i /my/path.sql
+python3 ezql.py parse --i /my/dir
 ```
 
 Here is a sample terminal output:
@@ -25,26 +25,26 @@ You can choose to parse "Create Procedure" statements, or simply all DDL stateme
 by setting the --mode flag. Note that DDL statements will not be tied to the procedure
 they belong to when running in DDL mode.
 ```bash
-python3 ezql.py show --i /my/path.sql --mode procedure
-python3 ezql.py show --i /my/path.sql --mode ddl
+python3 ezql.py parse --i /my/path.sql --mode procedure
+python3 ezql.py parse --i /my/path.sql --mode ddl
 ```
 
 Statement delimiter can be specified using the --dl flag.
 If not specified as command line argument, the delimiter will have the value defined in config/config.py.
 If the --p flag is set to True, this delimiter is used for finding Create Procedure statements only, and it is assumed that individual DDL statements inside of the procedure use ';' as delimiter.
 ```bash
-python3 ezql.py show --i /my/path.sql --dl ';;'
+python3 ezql.py parse --i /my/path.sql --dl ';;'
 ```
 
 A default schema can be specified using the --ds flag.
 If not specified as command line argument, the default schema will have the value defined in config/config.py
 ```bash
-python3 ezql.py show --i /my/path.sql --ds default
+python3 ezql.py parse --i /my/path.sql --ds default
 ```
 
 Results can be saved as Mermaid.js flowcharts in HTML files
 ```bash
-python3 ezql.py show --i /my/path.sql --chart /output/file.html
+python3 ezql.py parse --i /my/path.sql --chart /output/file.html
 ```
 Here is sample output file:
 

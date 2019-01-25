@@ -8,6 +8,7 @@ from parse.runner import Runner
     [(';', 'ddl', delete_path, [PARSE_FILE_DELETE_EXPECTED]),
      (';', 'ddl', update_path, [PARSE_FILE_UPDATE_EXPECTED]),
      (';', 'ddl', insert_path, [PARSE_FILE_INSERT_EXPECTED]),
+     (';', 'ddl', replace_path, [PARSE_FILE_REPLACE_EXPECTED]),
      (';', 'ddl', truncate_path, [PARSE_FILE_TRUNCATE_EXPECTED]),
      (';', 'ddl', drop_table_path, [PARSE_FILE_DROP_TABLE_EXPECTED])]
 )

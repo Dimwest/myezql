@@ -3,6 +3,7 @@ from sqlparse import format as fmt
 test_dir_path = './tests/_resources/'
 procedure_path = './tests/_resources/procedure.sql'
 insert_path = './tests/_resources/insert.sql'
+replace_path = './tests/_resources/replace.sql'
 update_path = './tests/_resources/update.sql'
 delete_path = './tests/_resources/delete.sql'
 truncate_path = './tests/_resources/truncate.sql'
@@ -16,6 +17,10 @@ with open(procedure_path, 'r') as file:
 # Open and upper case test insert statement
 with open(insert_path, 'r') as file:
     TEST_INSERT_STATEMENT = fmt(file.read().upper(), strip_comments=True).strip()
+
+# Open and upper case test replace statement
+with open(replace_path, 'r') as file:
+    TEST_REPLACE_STATEMENT = fmt(file.read().upper(), strip_comments=True).strip()
 
 # Open and upper case test update statement
 with open(update_path, 'r') as file:
@@ -49,6 +54,14 @@ PARSE_STATEMENT_INSERT_EXPECTED = {'operation': 'INSERT',
                                    'target_table': {'schema': TEST_DEFAULT_SCHEMA, 'name': 'mytable'},
                                    'target_columns': ['col_1', 'col_2', 'col_3', 'col_4', 'col_5', 'col_6', 'col_7']}
 
+PARSE_STATEMENT_REPLACE_EXPECTED = {'operation': 'REPLACE',
+                                    'from_table': [{'schema': TEST_DEFAULT_SCHEMA, 'name': 'src_tab_1'}],
+                                    'join_table': [
+                                        {'schema': TEST_DEFAULT_SCHEMA, 'name': 'src_tab_2'},
+                                        {'schema': TEST_DEFAULT_SCHEMA, 'name': 'src_tab_3'}
+                                    ],
+                                    'target_table': {'schema': TEST_DEFAULT_SCHEMA, 'name': 'mytable'},
+                                    'target_columns': ['col_1', 'col_2', 'col_3', 'col_4', 'col_5', 'col_6', 'col_7']}
 
 PARSE_STATEMENT_UPDATE_EXPECTED = {'operation': 'UPDATE',
                                    'join_table': [
@@ -78,6 +91,17 @@ INSERT_EXPECTED = {'operation': 'INSERT',
                    'target_table': {'schema': TEST_DEFAULT_SCHEMA, 'name': 'mytable'},
                    'target_columns': ['col_1', 'col_2', 'col_3', 'col_4', 'col_5', 'col_6', 'col_7']}
 
+REPLACE_EXPECTED = {'operation': 'REPLACE',
+                    'procedure': 'testproc',
+                    'from_table': [{'schema': TEST_DEFAULT_SCHEMA, 'name': 'src_tab_1'}],
+                    'join_table': [
+                        {'schema': TEST_DEFAULT_SCHEMA, 'name': 'src_tab_2'},
+                        {'schema': TEST_DEFAULT_SCHEMA, 'name': 'src_tab_3'}
+                    ],
+                    'target_table': {'schema': TEST_DEFAULT_SCHEMA, 'name': 'mytable'},
+                    'target_columns': ['col_1', 'col_2', 'col_3', 'col_4', 'col_5', 'col_6', 'col_7']}
+
+
 UPDATE_EXPECTED = {'operation': 'UPDATE',
                    'procedure': 'testproc',
                    'join_table': [
@@ -104,6 +128,7 @@ PARSE_FILE_PROCEDURE_EXPECTED = {'path': procedure_path,
                                  'name': 'testproc',
                                  'schema': 'example',
                                  'statements': [INSERT_EXPECTED,
+                                                REPLACE_EXPECTED,
                                                 UPDATE_EXPECTED,
                                                 DELETE_EXPECTED,
                                                 TRUNCATE_EXPECTED,
@@ -164,6 +189,20 @@ PARSE_FILE_INSERT_EXPECTED = {'path': insert_path,
                                    'target_columns': ['col_1', 'col_2', 'col_3', 'col_4', 'col_5', 'col_6', 'col_7']}
                               ]}
 
+PARSE_FILE_REPLACE_EXPECTED = {'path': replace_path,
+                               'name': replace_path,
+                               'schema': '',
+                               'statements': [
+                                   {'operation': 'REPLACE',
+                                    'procedure': replace_path,
+                                    'from_table': [{'schema': TEST_DEFAULT_SCHEMA, 'name': 'src_tab_1'}],
+                                    'join_table': [
+                                        {'schema': TEST_DEFAULT_SCHEMA, 'name': 'src_tab_2'},
+                                        {'schema': TEST_DEFAULT_SCHEMA, 'name': 'src_tab_3'}
+                                    ],
+                                    'target_table': {'schema': TEST_DEFAULT_SCHEMA, 'name': 'mytable'},
+                                    'target_columns': ['col_1', 'col_2', 'col_3', 'col_4', 'col_5', 'col_6', 'col_7']}
+                               ]}
 
 PARSE_FILE_UPDATE_EXPECTED = {'path': update_path,
                               'name': update_path,
@@ -191,6 +230,16 @@ DIR_PROCEDURE_EXPECTED_INSERT = {'operation': 'INSERT',
                                  'target_table': {'schema': TEST_DEFAULT_SCHEMA, 'name': 'mytable'},
                                  'target_columns': ['col_1', 'col_2', 'col_3', 'col_4', 'col_5', 'col_6', 'col_7']}
 
+DIR_PROCEDURE_EXPECTED_REPLACE = {'operation': 'REPLACE',
+                                  'procedure': procedure_path,
+                                  'from_table': [{'schema': TEST_DEFAULT_SCHEMA, 'name': 'src_tab_1'}],
+                                  'join_table': [
+                                      {'schema': TEST_DEFAULT_SCHEMA, 'name': 'src_tab_2'},
+                                      {'schema': TEST_DEFAULT_SCHEMA, 'name': 'src_tab_3'}
+                                  ],
+                                  'target_table': {'schema': TEST_DEFAULT_SCHEMA, 'name': 'mytable'},
+                                  'target_columns': ['col_1', 'col_2', 'col_3', 'col_4', 'col_5', 'col_6', 'col_7']}
+
 DIR_PROCEDURE_EXPECTED_UPDATE = {'operation': 'UPDATE',
                                  'procedure': procedure_path,
                                  'join_table': [
@@ -216,6 +265,7 @@ DIR_PROCEDURE_EXPECTED = {'path': procedure_path,
                           'schema': '',
                           'statements': [
                               DIR_PROCEDURE_EXPECTED_INSERT,
+                              DIR_PROCEDURE_EXPECTED_REPLACE,
                               DIR_PROCEDURE_EXPECTED_UPDATE,
                               DIR_PROCEDURE_EXPECTED_DELETE,
                               DIR_PROCEDURE_EXPECTED_TRUNCATE,
@@ -227,6 +277,7 @@ PARSE_DIR_EXPECTED_DDL = [
     PARSE_FILE_DELETE_EXPECTED,
     PARSE_FILE_DROP_TABLE_EXPECTED,
     PARSE_FILE_INSERT_EXPECTED,
+    PARSE_FILE_REPLACE_EXPECTED,
     DIR_PROCEDURE_EXPECTED,
     PARSE_FILE_TRUNCATE_EXPECTED,
     PARSE_FILE_UPDATE_EXPECTED

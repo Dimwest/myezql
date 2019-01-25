@@ -31,6 +31,7 @@ def test_parse_dir(delimiter, mode, expected):
     [(';', 'ddl', delete_path, [PARSE_FILE_DELETE_EXPECTED]),
      (';', 'ddl', update_path, [PARSE_FILE_UPDATE_EXPECTED]),
      (';', 'ddl', insert_path, [PARSE_FILE_INSERT_EXPECTED]),
+     (';', 'ddl', replace_path, [PARSE_FILE_REPLACE_EXPECTED]),
      (';', 'ddl', truncate_path, [PARSE_FILE_TRUNCATE_EXPECTED]),
      (';', 'ddl', drop_table_path, [PARSE_FILE_DROP_TABLE_EXPECTED])]
 )
@@ -69,6 +70,7 @@ def test_parse_procedure():
 @pytest.mark.parametrize(
     "test_input, dmltype, expected",
     [(TEST_INSERT_STATEMENT, 'INSERT', PARSE_STATEMENT_INSERT_EXPECTED),
+     (TEST_REPLACE_STATEMENT, 'REPLACE', PARSE_STATEMENT_REPLACE_EXPECTED),
      (TEST_UPDATE_STATEMENT, 'UPDATE', PARSE_STATEMENT_UPDATE_EXPECTED),
      (TEST_DELETE_STATEMENT, 'DELETE', PARSE_STATEMENT_DELETE_EXPECTED),
      (TEST_DROP_TABLE_STATEMENT, 'DROP TABLE', PARSE_STATEMENT_DROP_TABLE_EXPECTED),
