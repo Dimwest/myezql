@@ -55,6 +55,7 @@ CREATE PROCEDURE example.testproc(IN test_arg int unsigned)
 
   TRUNCATE TABLE src_tab_11;
 
+  DROP TABLE IF EXISTS src_tab_12;
 
 END
 

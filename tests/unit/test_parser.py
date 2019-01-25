@@ -18,9 +18,12 @@ def test_parse_dir(delimiter, mode, expected):
     # Test directory parsing
     p = Runner(TEST_DEFAULT_SCHEMA, delimiter, mode)
     p.parse_dir(test_dir_path)
-    for x in p.results:
-        assert x in expected
-    assert len(p.results) == len(expected)
+    statements = [s for file in p.results for s in file['statements']]
+    statements_expected = [s for file in expected for s in file['statements']]
+
+    # Assert statements parsed are correct
+    assert sorted(statements, key=lambda k: k['operation'] + k['procedure']) == \
+        sorted(statements_expected, key=lambda k: k['operation'] + k['procedure'])
 
 
 @pytest.mark.parametrize(
@@ -29,7 +32,7 @@ def test_parse_dir(delimiter, mode, expected):
      (';', 'ddl', update_path, [PARSE_FILE_UPDATE_EXPECTED]),
      (';', 'ddl', insert_path, [PARSE_FILE_INSERT_EXPECTED]),
      (';', 'ddl', truncate_path, [PARSE_FILE_TRUNCATE_EXPECTED]),
-     (';;', 'procedure', procedure_path, [PARSE_FILE_PROCEDURE_EXPECTED])]
+     (';', 'ddl', drop_table_path, [PARSE_FILE_DROP_TABLE_EXPECTED])]
 )
 def test_parse_file(delimiter, mode, path, expected):
 
@@ -56,7 +59,11 @@ def test_parse_procedure():
     p = processor.parse_str(procedure_path, TEST_PROCEDURE)
 
     # Check equality at Procedure level
-    assert p == PARSE_FILE_PROCEDURE_EXPECTED
+    assert p['name'] == PARSE_FILE_PROCEDURE_EXPECTED['name']
+    assert p['schema'] == PARSE_FILE_PROCEDURE_EXPECTED['schema']
+    assert p['path'] == PARSE_FILE_PROCEDURE_EXPECTED['path']
+    assert sorted(p['statements'], key=lambda k: k['operation']) == \
+        sorted(PARSE_FILE_PROCEDURE_EXPECTED['statements'], key=lambda k: k['operation'])
 
 
 @pytest.mark.parametrize(
@@ -64,6 +71,7 @@ def test_parse_procedure():
     [(TEST_INSERT_STATEMENT, 'INSERT', PARSE_STATEMENT_INSERT_EXPECTED),
      (TEST_UPDATE_STATEMENT, 'UPDATE', PARSE_STATEMENT_UPDATE_EXPECTED),
      (TEST_DELETE_STATEMENT, 'DELETE', PARSE_STATEMENT_DELETE_EXPECTED),
+     (TEST_DROP_TABLE_STATEMENT, 'DROP TABLE', PARSE_STATEMENT_DROP_TABLE_EXPECTED),
      (TEST_TRUNCATE_STATEMENT, 'TRUNCATE', PARSE_STATEMENT_TRUNCATE_EXPECTED)]
 )
 def test_parse_statement(test_input, dmltype, expected):

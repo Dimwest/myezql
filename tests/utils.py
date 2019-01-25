@@ -6,6 +6,7 @@ insert_path = './tests/_resources/insert.sql'
 update_path = './tests/_resources/update.sql'
 delete_path = './tests/_resources/delete.sql'
 truncate_path = './tests/_resources/truncate.sql'
+drop_table_path = './tests/_resources/drop_table.sql'
 
 # NB: Antlr grammar is case-sensitive. Input has to be upper case.
 # Open and upper case test procedure file
@@ -27,6 +28,10 @@ with open(delete_path, 'r') as file:
 # Open and upper case test truncate statement
 with open(truncate_path, 'r') as file:
     TEST_TRUNCATE_STATEMENT = fmt(file.read().upper(), strip_comments=True).strip()
+
+# Open and upper case test drop table statement
+with open(drop_table_path, 'r') as file:
+    TEST_DROP_TABLE_STATEMENT = fmt(file.read().upper(), strip_comments=True).strip()
 
 # test default parameters
 TEST_DEFAULT_SCHEMA = 'default_schema'
@@ -58,6 +63,9 @@ PARSE_STATEMENT_DELETE_EXPECTED = {'operation': 'DELETE',
 PARSE_STATEMENT_TRUNCATE_EXPECTED = {'operation': 'TRUNCATE',
                                      'target_table': {'schema': TEST_DEFAULT_SCHEMA, 'name': 'src_tab_11'}}
 
+PARSE_STATEMENT_DROP_TABLE_EXPECTED = {'operation': 'DROP TABLE',
+                                       'target_table': {'schema': TEST_DEFAULT_SCHEMA, 'name': 'src_tab_12'}}
+
 # Define parse_file result components for procedure mode
 
 INSERT_EXPECTED = {'operation': 'INSERT',
@@ -86,6 +94,10 @@ TRUNCATE_EXPECTED = {'operation': 'TRUNCATE',
                      'procedure': 'testproc',
                      'target_table': {'schema': TEST_DEFAULT_SCHEMA, 'name': 'src_tab_11'}}
 
+DROP_TABLE_EXPECTED = {'operation': 'DROP TABLE',
+                       'procedure': 'testproc',
+                       'target_table': {'schema': TEST_DEFAULT_SCHEMA, 'name': 'src_tab_12'}}
+
 # Define parse_file results for procedure mode
 
 PARSE_FILE_PROCEDURE_EXPECTED = {'path': procedure_path,
@@ -94,7 +106,8 @@ PARSE_FILE_PROCEDURE_EXPECTED = {'path': procedure_path,
                                  'statements': [INSERT_EXPECTED,
                                                 UPDATE_EXPECTED,
                                                 DELETE_EXPECTED,
-                                                TRUNCATE_EXPECTED]}
+                                                TRUNCATE_EXPECTED,
+                                                DROP_TABLE_EXPECTED]}
 
 # Define parse_file results for ddl mode
 
@@ -123,6 +136,18 @@ PARSE_FILE_TRUNCATE_EXPECTED = {'path': truncate_path,
                                      }}
                                 ]}
 
+
+PARSE_FILE_DROP_TABLE_EXPECTED = {'path': drop_table_path,
+                                  'name': drop_table_path,
+                                  'schema': '',
+                                  'statements': [
+                                      {'procedure': drop_table_path,
+                                       'operation': 'DROP TABLE',
+                                       'target_table': {
+                                           'name': 'src_tab_12',
+                                           'schema': TEST_DEFAULT_SCHEMA
+                                       }}
+                                  ]}
 
 PARSE_FILE_INSERT_EXPECTED = {'path': insert_path,
                               'name': insert_path,
@@ -182,6 +207,10 @@ DIR_PROCEDURE_EXPECTED_TRUNCATE = {'operation': 'TRUNCATE',
                                    'procedure': procedure_path,
                                    'target_table': {'schema': TEST_DEFAULT_SCHEMA, 'name': 'src_tab_11'}}
 
+DIR_PROCEDURE_EXPECTED_DROP_TABLE = {'operation': 'DROP TABLE',
+                                     'procedure': procedure_path,
+                                     'target_table': {'schema': TEST_DEFAULT_SCHEMA, 'name': 'src_tab_12'}}
+
 DIR_PROCEDURE_EXPECTED = {'path': procedure_path,
                           'name': procedure_path,
                           'schema': '',
@@ -189,15 +218,17 @@ DIR_PROCEDURE_EXPECTED = {'path': procedure_path,
                               DIR_PROCEDURE_EXPECTED_INSERT,
                               DIR_PROCEDURE_EXPECTED_UPDATE,
                               DIR_PROCEDURE_EXPECTED_DELETE,
-                              DIR_PROCEDURE_EXPECTED_TRUNCATE
+                              DIR_PROCEDURE_EXPECTED_TRUNCATE,
+                              DIR_PROCEDURE_EXPECTED_DROP_TABLE
                           ]}
 
 
 PARSE_DIR_EXPECTED_DDL = [
-    PARSE_FILE_TRUNCATE_EXPECTED,
     PARSE_FILE_DELETE_EXPECTED,
+    PARSE_FILE_DROP_TABLE_EXPECTED,
     PARSE_FILE_INSERT_EXPECTED,
     DIR_PROCEDURE_EXPECTED,
+    PARSE_FILE_TRUNCATE_EXPECTED,
     PARSE_FILE_UPDATE_EXPECTED
 ]
 
