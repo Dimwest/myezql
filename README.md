@@ -42,9 +42,10 @@ If not specified as command line argument, the default schema will have the valu
 python3 ezql.py parse --i /my/path.sql --ds default
 ```
 
-Results can be saved as Mermaid.js flowcharts in HTML files
+Results can be saved as flowcharts in HTML files and/or as JSON files
 ```bash
 python3 ezql.py parse --i /my/path.sql --chart /output/file.html
+python3 ezql.py parse --i /my/path.sql --json /output/file.json
 ```
 Here is sample output file:
 

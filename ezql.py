@@ -5,12 +5,13 @@ from utils.logging import *
 from parse.runner import Runner
 from output.cmd import beautify
 from output.mermaid import Mermaid
+from output.json import to_json
 
 
 class MyEzQl(object):
 
     @with_logging
-    def parse(self, i: str, ds='', dl='', mode: str='', chart: str='') -> None:
+    def parse(self, i: str, ds='', dl='', mode: str='', chart: str='', json: str='') -> None:
 
         """
         Core function parsing input file or directory and pretty-printing results
@@ -36,6 +37,7 @@ class MyEzQl(object):
         # Validate input and output paths
         validate_input_path(i)
         validate_output_path(chart, 'html')
+        validate_output_path(json, 'json')
 
         # Set default schema to config value if not provided
         ds = parser['parser_config']['default_schema'] if not ds else ds
@@ -62,6 +64,10 @@ class MyEzQl(object):
         if chart:
             m = Mermaid(runner.results)
             m.tables_chart(chart)
+            logger.info(f'{chart} successfully saved')
+
+        if json:
+            to_json(runner.results, json)
             logger.info(f'{chart} successfully saved')
 
 
