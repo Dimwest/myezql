@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/Dimwest/MyEzQL.svg?branch=master)](https://travis-ci.com/Dimwest/MyEzQL)
+
 # MyEzQL
 
 MyEzQl is a Python CLI tool parsing SQL files and enabling easier visualization of data flows 
