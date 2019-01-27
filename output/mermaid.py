@@ -14,28 +14,29 @@ class Mermaid:
         with open('./output/resources/template.html', 'r') as template:
             self.soup = BeautifulSoup(template.read(), features="html.parser")
 
+    def arrow(self, statement, statement_part):
+
+        if statement.get(statement_part):
+            for table in statement.get(statement_part):
+
+                arrow = f"{table['schema']}.{table['name']}" \
+                        f"-->|{statement['procedure']}|" \
+                        f"{statement['target_table']['schema']}" \
+                        f".{statement['target_table']['name']};"
+
+                # If arrow not already existing, add it to the chart
+                if arrow not in self.tables_flow:
+                    self.tables_flow.append(arrow)
+
     def tables_chart(self, path) -> None:
 
         # Creating Mermaid markdown string
-        # TODO -> Rewrite in a more elegant way
         for p in self.input:
+            # For all statements in parsed procedure/file
             for s in p['statements']:
-                if s.get('from_table'):
-                    for t in s.get('from_table'):
-                        arrow = f"{t['schema']}.{t['name']}" \
-                                f"-->|{s['procedure']}|" \
-                                f"{s['target_table']['schema']}" \
-                                f".{s['target_table']['name']};"
-                        if arrow not in self.tables_flow:
-                            self.tables_flow.append(arrow)
-                if s.get('join_table'):
-                    for t in s.get('join_table'):
-                        arrow = f"{t['schema']}.{t['name']}" \
-                                f"-->|{s['procedure']}|" \
-                                f"{s['target_table']['schema']}" \
-                                f".{s['target_table']['name']};"
-                        if arrow not in self.tables_flow:
-                            self.tables_flow.append(arrow)
+                self.arrow(s, 'from_table')
+                self.arrow(s, 'join_table')
+
         self.tables_flow = list(set(self.tables_flow))
         self.tables_flow.insert(0, self.graph_type)
         self.output = '\n'.join(self.tables_flow)

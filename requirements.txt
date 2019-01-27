@@ -1,6 +1,5 @@
 typing==3.6.4
 colorama==0.3.9
-pytest==3.8.0
 sqlparse==0.2.4
 ujson==1.35
 fire==0.1.3

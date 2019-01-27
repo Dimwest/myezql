@@ -1,0 +1,16 @@
+language: python
+
+python: '3.6'
+
+env:
+  global:
+    - PYTHONPATH=$TRAVIS_BUILD_DIR:$PYTHONPATH
+
+install:
+  # Install dependencies
+  - pip install -Ur requirements.txt
+  - pip install -Ur requirements-test.txt
+
+script:
+  # Run all tests
+  - pytest -svv tests/

@@ -1,16 +1,16 @@
 from sqlparse import format as fmt
 
-test_dir_path = './tests/_resources/'
-procedure_path = './tests/_resources/procedure.sql'
-insert_path = './tests/_resources/insert.sql'
-replace_path = './tests/_resources/replace.sql'
-update_path = './tests/_resources/update.sql'
-delete_path = './tests/_resources/delete.sql'
-truncate_path = './tests/_resources/truncate.sql'
-drop_table_path = './tests/_resources/drop_table.sql'
-create_table_columns_path = './tests/_resources/create_table_columns.sql'
-create_table_like_path = './tests/_resources/create_table_like.sql'
-create_table_query_path = './tests/_resources/create_table_query.sql'
+test_dir_path = './tests/_resources/clean/'
+procedure_path = './tests/_resources/clean/procedure.sql'
+insert_path = './tests/_resources/clean/insert.sql'
+replace_path = './tests/_resources/clean/replace.sql'
+update_path = './tests/_resources/clean/update.sql'
+delete_path = './tests/_resources/clean/delete.sql'
+truncate_path = './tests/_resources/clean/truncate.sql'
+drop_table_path = './tests/_resources/clean/drop_table.sql'
+create_table_columns_path = './tests/_resources/clean/create_table_columns.sql'
+create_table_like_path = './tests/_resources/clean/create_table_like.sql'
+create_table_query_path = './tests/_resources/clean/create_table_query.sql'
 
 # NB: Antlr grammar is case-sensitive. Input has to be upper case.
 # Open and upper case test procedure file

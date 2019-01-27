@@ -9,14 +9,13 @@ class Mapper:
 
     def __init__(self, delimiter, mode):
 
-        # TODO -> Rewrite with DRY in mind **facepalm**
-        INSERT_REGEX = insert_regex(delimiter) if mode == 'ddl' else insert_regex(';')
-        REPLACE_REGEX = replace_regex(delimiter) if mode == 'ddl' else replace_regex(';')
-        UPDATE_REGEX = update_regex(delimiter) if mode == 'ddl' else update_regex(';')
-        DELETE_REGEX = delete_regex(delimiter) if mode == 'ddl' else delete_regex(';')
-        CREATE_TABLE_REGEX = create_table_regex(delimiter) if mode == 'ddl' else create_table_regex(';')
-        DROP_TABLE_REGEX = drop_table_regex(delimiter) if mode == 'ddl' else drop_table_regex(';')
-        TRUNCATE_REGEX = truncate_regex(delimiter) if mode == 'ddl' else truncate_regex(';')
+        INSERT_REGEX = self.reg(delimiter, mode, insert_regex)
+        REPLACE_REGEX = self.reg(delimiter, mode, replace_regex)
+        UPDATE_REGEX = self.reg(delimiter, mode, update_regex)
+        DELETE_REGEX = self.reg(delimiter, mode, delete_regex)
+        CREATE_TABLE_REGEX = self.reg(delimiter, mode, create_table_regex)
+        DROP_TABLE_REGEX = self.reg(delimiter, mode, drop_table_regex)
+        TRUNCATE_REGEX = self.reg(delimiter, mode, truncate_regex)
 
         self.extract_regexes = \
             {'INSERT': INSERT_REGEX,
@@ -32,6 +31,22 @@ class Mapper:
         self.extractors = None
         self.parsermethods = None
         self.mapper = None
+
+    def reg(self, delimiter, mode, reg_func):
+
+        """
+        Function building regular expression based on mode and delimiter
+
+        :param delimiter: delimiter entered by user
+        :param mode: parsing mode entered by user, can be 'ddl' or 'procedure'
+        :param reg_func: regex function to apply parameters to
+        :return: compiled regular expression
+        """
+
+        if mode == 'ddl':
+            return reg_func(delimiter)
+        else:
+            return reg_func(';')
 
     def map_methods(self, walker):
 
