@@ -1,6 +1,6 @@
 import pytest
 from tests.utils import *
-from parse.runner import Runner
+from parse.worker import Worker
 from parse.mapper import Mapper
 
 
@@ -16,7 +16,7 @@ def test_parse_dir(delimiter, mode, expected):
     """
 
     # Test directory parsing
-    p = Runner(TEST_DEFAULT_SCHEMA, delimiter, mode)
+    p = Worker(TEST_DEFAULT_SCHEMA, delimiter, mode)
     p.parse_dir(test_dir_path)
     statements = [s for file in p.results for s in file['statements']]
     statements_expected = [s for file in expected for s in file['statements']]
@@ -50,7 +50,7 @@ def test_parse_file(delimiter, mode, path, expected):
     """
 
     # Ensure file parsing results are correct
-    p = Runner(TEST_DEFAULT_SCHEMA, delimiter, mode)
+    p = Worker(TEST_DEFAULT_SCHEMA, delimiter, mode)
     results = p.parse_file(path)
     assert results == expected
 
@@ -59,7 +59,7 @@ def test_parse_procedure():
     """Run parser on test procedure file and ensure result is correct."""
 
     # Run parser on test procedure file
-    processor = Runner(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
+    processor = Worker(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
     p = processor.parse_str(procedure_path, TEST_PROCEDURE)
 
     # Check equality at Procedure level
@@ -93,7 +93,7 @@ def test_parse_statement(test_input, dmltype, expected):
     """
 
     mapper = Mapper(TEST_DELIMITER, TEST_MODE)
-    p = Runner(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
+    p = Worker(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
     r = p.parse_statement(dmltype=dmltype, s=test_input, mapper=mapper)
     assert r == expected
 
@@ -106,7 +106,7 @@ def test_parse_object_name():
     """
 
     # Ensure that object name gets correctly split and default schema behavior works
-    p = Runner(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
+    p = Worker(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
     assert p.parse_object_name('example.testproc') == ('example', 'testproc')
     assert p.parse_object_name('testproc') == (TEST_DEFAULT_SCHEMA, 'testproc')
 
@@ -119,5 +119,5 @@ def test_get_procedure_name():
     """
 
     # Ensure that procedure name gets correctly identified and split
-    p = Runner(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
+    p = Worker(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
     assert p.get_procedure_name(TEST_PROCEDURE) == ('example', 'testproc')

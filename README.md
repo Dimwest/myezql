@@ -2,13 +2,9 @@
 
 # MyEzQL
 
-MyEzQl is a Python CLI tool parsing SQL files and enabling easier visualization of data flows 
+MyEzQL is a Python CLI tool parsing SQL files and enabling easier visualization of data flows 
 by pretty-printing parsing results and exporting them as HTML flowcharts.
 
-Although MyEzQl can work fine with most SQL dialects, please keep in mind that its parser 
-has been generated using ANTLR4 and MySQL 5.6 grammar, hence it does NOT support some 
-Postgres statements such as 'WITH' clauses for example. 
-Nested subqueries are however supported.
 
 ## Tutorial
 
@@ -24,8 +20,9 @@ Here is a sample terminal output:
 ![MyEzQL screenshot](img/cmd.png?raw=true "MyEzQL CLI creenshot")
 
 You can choose to parse "Create Procedure" statements, or simply all DDL statements,
-by setting the --mode flag. Note that DDL statements will not be tied to the procedure
-they belong to when running in DDL mode.
+by setting the --mode flag. Note that DDL statements will only be linked to the procedure
+they belong to when running in procedure mode. In DDL mode, they'll simply be linked to the
+file they belong to.
 ```bash
 python3 ezql.py parse --i /my/path.sql --mode procedure
 python3 ezql.py parse --i /my/path.sql --mode ddl
@@ -53,6 +50,20 @@ Here is sample output file:
 
 ![MyEzQL screenshot](img/flowchart.png?raw=true "MyEzQL flowchart screenshot")
 
+## Good to know
+
+- Although MyEzQL works fine with most SQL statements, keep in mind that its parser 
+has been generated using ANTLR4 and MySQL 5.6 grammar, hence it does NOT support some 
+statements present in other SQL dialects, such as 'WITH' clauses for example.
+
+- MyEzQL supports parsing of nested subqueries.
+
+- SQL reserved keywords used as table or column aliases (e.g. 'events') can cause parsing bugs,
+resulting in a failure to extract information from the concerned statement(s).
+
+- The generation of flowcharts summarizing very complex, entangled table relationships might be
+difficult to read through.
+
 ## To-do
 
 #### Parsed statements
@@ -69,24 +80,24 @@ Here is sample output file:
 
 
 #### Refactoring:
-- [ ] Refactor output functions
-- [ ] Improve logging, introduce verbose arg
+- [x] Refactor output functions
 - [x] Replace unnecessary SQL objects by dictionaries
 - [x] Improve project structure
 - [x] Add type hints
 
 #### Tests / build:
-- [ ] Add Travis CI setup
 - [ ] Add coverage report
-- [ ] Run tests at larger scale w/ manual verification
-- [x] Finish unit and e2e testing
+- [ ] Write tests for output functions
+- [x] Add Travis CI setup
+- [x] Finish unit and e2e testing of parsing features
 - [x] Test all statements
 - [x] Introduce end-to-end testing of processing
 - [x] Add most important unit tests
 
 #### Tool functionalities:
 - [ ] Analysis features: table/function childs, parents, etc.
-- [ ] Log execution summary (return results and run summary from logging decorator)
+- [ ] Improve logging, introduce verbose arg
+- [ ] Log execution summary
 - [ ] Add install script
 - [x] Add proper config file
 - [x] Add HTML flowchart creation using Mermaid

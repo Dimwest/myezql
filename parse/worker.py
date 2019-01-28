@@ -11,10 +11,9 @@ from parse.mapper import Mapper
 from typing import List, Tuple, Optional, Dict
 
 
-class Runner:
+class Worker:
 
-    """Main class managing all the parsing operations
-    processing using ANTLR-generated objects"""
+    """Core object managing all the parsing operations using ANTLR4-generated parser"""
 
     def __init__(self, default_schema: str, delimiter: str, mode: str) -> None:
 
