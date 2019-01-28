@@ -2,7 +2,7 @@ import fire
 from configparser import ConfigParser
 from utils.paths import *
 from utils.logging import *
-from parse.runner import Runner
+from parse.worker import Worker
 from output.cmd import beautify
 from output.mermaid import Mermaid
 from output.json import to_json
@@ -54,7 +54,7 @@ class MyEzQl(object):
                     f'\n  parsing mode   --> {mode}\n')
 
         # Configure and run parser
-        runner = Runner(default_schema=ds, delimiter=dl, mode=mode)
+        runner = Worker(default_schema=ds, delimiter=dl, mode=mode)
         runner.run(i)
 
         # Pretty print results
