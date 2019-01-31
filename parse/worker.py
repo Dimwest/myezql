@@ -477,3 +477,27 @@ class Worker:
             elif not (isinstance(c, TerminalNode) or isinstance(c, ErrorNode)):
                 tables.extend(self.get_all_tables(c))
         return tables
+
+    def filter_parents(self, table: str):
+        pass
+
+    def filter_children(self, table: str):
+        pass
+
+    def simple_filter(self, tables: List[str]) -> None:
+
+        """
+        Function filtering statements based on a list of tables: only statements containing
+        direct parents/children of the selected tables will be kept in results.
+
+        :param tables: list of table dictionaries with keys "schema" and "name"
+        """
+
+        for p in self.results:
+            p['statements'] = [s for s in p['statements']
+                               if any(t in s['from_table'] for t in tables if s.get('from_table'))
+                               or any(t in s['join_table'] for t in tables if s.get('join_table'))
+                               or any(t == s['target_table'] for t in tables)]
+
+    def recursive_filter(self, tables: List[str]):
+        pass

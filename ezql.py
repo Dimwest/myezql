@@ -1,17 +1,21 @@
 import fire
 from configparser import ConfigParser
-from utils.paths import *
+from utils.validation import *
 from utils.logging import *
 from parse.worker import Worker
 from output.cmd import beautify
 from output.mermaid import Mermaid
 from output.json import to_json
+from typing import Optional, List
 
 
 class MyEzQl(object):
 
     @with_logging
-    def parse(self, i: str, ds='', dl='', mode: str='', chart: str='', json: str='') -> None:
+    def parse(self, i: str, ds: Optional[str]=None, dl: Optional[str]=None,
+              mode: Optional[str]=None, chart: Optional[str]=None,
+              json: Optional[str]=None, tables: Optional[List[str]]= None
+              ) -> None:
 
         """
         Core function parsing input file or directory and pretty-printing results
@@ -28,16 +32,23 @@ class MyEzQl(object):
 
         :param chart: path to output .html flowchart, defaults to '', in which case
         no output file is created
+
+        :param json: path to output .json file, defaults to '', in which case
+        no output file is created
+
+        :param tables: list of table names to focus on in the analysis, only the parents
+        and children of these tables will be kept in the outputs
         """
 
         # Read config
         parser = ConfigParser()
         parser.read('config.ini')
 
-        # Validate input and output paths
+        # Validate arguments
         validate_input_path(i)
         validate_output_path(chart, 'html')
         validate_output_path(json, 'json')
+        tables = validate_tables(tables)
 
         # Set default schema to config value if not provided
         ds = parser['parser_config']['default_schema'] if not ds else ds
@@ -54,20 +65,24 @@ class MyEzQl(object):
                     f'\n  parsing mode   --> {mode}\n')
 
         # Configure and run parser
-        runner = Worker(default_schema=ds, delimiter=dl, mode=mode)
-        runner.run(i)
+        worker = Worker(default_schema=ds, delimiter=dl, mode=mode)
+        worker.run(i)
+
+        # If filter defined, apply to results
+        if tables:
+            worker.simple_filter(tables)
 
         # Pretty print results
-        beautify(runner.results)
+        beautify(worker.results)
 
         # If .html flowchart output required, create it
         if chart:
-            m = Mermaid(runner.results)
+            m = Mermaid(worker.results)
             m.tables_chart(chart)
             logger.info(f'{chart} successfully saved')
 
         if json:
-            to_json(runner.results, json)
+            to_json(worker.results, json)
             logger.info(f'{chart} successfully saved')
 
 

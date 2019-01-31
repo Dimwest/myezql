@@ -80,6 +80,7 @@ difficult to read through.
 
 
 #### Refactoring:
+- [ ] Finish commenting
 - [x] Refactor output functions
 - [x] Replace unnecessary SQL objects by dictionaries
 - [x] Improve project structure
@@ -96,6 +97,7 @@ difficult to read through.
 
 #### Tool functionalities:
 - [ ] Analysis features: table/function childs, parents, etc.
+- [ ] Add arguments typecheck 
 - [ ] Improve logging, introduce verbose arg
 - [ ] Log execution summary
 - [ ] Add install script

@@ -116,17 +116,3 @@ def is_path_exists_or_creatable(pathname: str) -> bool:
     except OSError:
         return False
 
-
-def validate_output_path(path, fmt):
-
-    if path:
-        if not (is_pathname_valid(path) and path.endswith(fmt)):
-            raise OSError(f'{path} is not a valid .{fmt} file name')
-        elif not (is_path_creatable(path) and path.endswith(fmt)):
-            raise OSError(f'output {fmt} file cannot be created at {path}')
-
-
-def validate_input_path(path):
-
-    if not os.path.isdir(path) and not (os.path.isfile(path) and is_pathname_valid(path) and path.endswith('.sql')):
-        raise OSError(f'{path} is not a valid directory or .sql file path')
