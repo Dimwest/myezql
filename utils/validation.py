@@ -28,5 +28,25 @@ def validate_tables(tables):
                              f'following format: schema.name')
         else:
             tables = [dict(zip(zipper, t.split('.'))) for t in tables]
-            print(tables)
             return tables
+
+
+def validate_parsing_mode(pmode):
+
+    supported_modes = ('ddl', 'procedure')
+
+    if pmode and pmode not in supported_modes:
+        raise ValueError(f'Parsing mode must be one of the following values: '
+                         f'{supported_modes}')
+
+
+def validate_filter_mode(tables, fmode):
+
+    supported_modes = ('simple', 'rec')
+
+    if fmode:
+        if not tables:
+            raise ValueError(f'Filter mode can only be set if tables are specified')
+        if fmode not in ('simple', 'rec'):
+            raise ValueError(f'Filter mode must be one of the following values: '
+                             f'{supported_modes}')
