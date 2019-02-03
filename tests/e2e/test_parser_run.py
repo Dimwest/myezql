@@ -26,7 +26,7 @@ def test_run_file(delimiter, mode, path, expected):
     :param expected: expected results
     """
 
-    p = Worker(TEST_DEFAULT_SCHEMA, delimiter, mode)
+    p = Worker(TEST_DEFAULT_SCHEMA, delimiter, mode, None)
     p.run(path)
     assert len(p.results) == len(expected)
     for r in p.results:
@@ -39,7 +39,7 @@ def test_run_file(delimiter, mode, path, expected):
 )
 def test_run_dir(delimiter, mode, path, expected):
 
-    p = Worker(TEST_DEFAULT_SCHEMA, delimiter, mode)
+    p = Worker(TEST_DEFAULT_SCHEMA, delimiter, mode, None)
     p.run(path)
 
     statements = [s for file in p.results for s in file['statements']]

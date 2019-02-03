@@ -16,7 +16,7 @@ def test_parse_dir(delimiter, mode, expected):
     """
 
     # Test directory parsing
-    p = Worker(TEST_DEFAULT_SCHEMA, delimiter, mode)
+    p = Worker(TEST_DEFAULT_SCHEMA, delimiter, mode, None)
     p.parse_dir(test_dir_path)
     statements = [s for file in p.results for s in file['statements']]
     statements_expected = [s for file in expected for s in file['statements']]
@@ -50,7 +50,7 @@ def test_parse_file(delimiter, mode, path, expected):
     """
 
     # Ensure file parsing results are correct
-    p = Worker(TEST_DEFAULT_SCHEMA, delimiter, mode)
+    p = Worker(TEST_DEFAULT_SCHEMA, delimiter, mode, None)
     results = p.parse_file(path)
     assert results == expected
 
@@ -59,7 +59,7 @@ def test_parse_procedure():
     """Run parser on test procedure file and ensure result is correct."""
 
     # Run parser on test procedure file
-    processor = Worker(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
+    processor = Worker(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE, None)
     p = processor.parse_str(procedure_path, TEST_PROCEDURE)
 
     # Check equality at Procedure level
@@ -71,7 +71,7 @@ def test_parse_procedure():
 
 
 @pytest.mark.parametrize(
-    "test_input, dmltype, expected",
+    "test_input, ddl_type, expected",
     [(TEST_INSERT_STATEMENT, 'INSERT', PARSE_STATEMENT_INSERT_EXPECTED),
      (TEST_REPLACE_STATEMENT, 'REPLACE', PARSE_STATEMENT_REPLACE_EXPECTED),
      (TEST_UPDATE_STATEMENT, 'UPDATE', PARSE_STATEMENT_UPDATE_EXPECTED),
@@ -82,19 +82,19 @@ def test_parse_procedure():
      (TEST_CREATE_TABLE_QUERY_STATEMENT, 'CREATE TABLE', PARSE_STATEMENT_CREATE_TABLE_QUERY_EXPECTED),
      (TEST_TRUNCATE_STATEMENT, 'TRUNCATE', PARSE_STATEMENT_TRUNCATE_EXPECTED)]
 )
-def test_parse_statement(test_input, dmltype, expected):
+def test_parse_statement(test_input, ddl_type, expected):
 
     """
     Run parser on test statements and ensure results are correct.
 
     :param test_input: test statement
-    :param dmltype: DML type of the statement tested
+    :param ddl_type: DML type of the statement tested
     :param expected: expected Statement object to compare with parser result
     """
 
     mapper = Mapper(TEST_DELIMITER, TEST_MODE)
-    p = Worker(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
-    r = p.parse_statement(dmltype=dmltype, s=test_input, mapper=mapper)
+    p = Worker(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE, None)
+    r = p.parse_statement(ddl_type=ddl_type, s=test_input, mapper=mapper)
     assert r == expected
 
 
@@ -106,7 +106,7 @@ def test_parse_object_name():
     """
 
     # Ensure that object name gets correctly split and default schema behavior works
-    p = Worker(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
+    p = Worker(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE, None)
     assert p.parse_object_name('example.testproc') == ('example', 'testproc')
     assert p.parse_object_name('testproc') == (TEST_DEFAULT_SCHEMA, 'testproc')
 
@@ -119,5 +119,5 @@ def test_get_procedure_name():
     """
 
     # Ensure that procedure name gets correctly identified and split
-    p = Worker(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE)
+    p = Worker(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE, None)
     assert p.get_procedure_name(TEST_PROCEDURE) == ('example', 'testproc')

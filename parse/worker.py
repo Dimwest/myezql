@@ -104,10 +104,10 @@ class Worker:
 
         mapper = Mapper(self.delimiter, self.pmode)
 
-        for DDLtype in mapper.extract_regexes.keys():
-            statements = re.findall(mapper.extract_regexes[DDLtype], p)
+        for ddl_type in mapper.extract_regexes.keys():
+            statements = re.findall(mapper.extract_regexes[ddl_type], p)
             for s in statements:
-                q = self.parse_statement(DDLtype, s, mapper)
+                q = self.parse_statement(ddl_type, s, mapper)
                 if q:
                     q['procedure'] = name
                     proc['statements'].append(q)
@@ -146,13 +146,13 @@ class Worker:
 
         return schema, name
 
-    def parse_statement(self, DDLtype: str, s: str, mapper: Mapper) -> Dict:
+    def parse_statement(self, ddl_type: str, s: str, mapper: Mapper) -> Dict:
 
         """
         Cleans DDL statement, creates parsing objects, and returns a
         Query object.
 
-        :param DDLtype: type of DDL statement being parsed
+        :param ddl_type: type of DDL statement being parsed
         :param s: DDL statement string
         :param mapper: Mapper object
         :return: Query object containing the statement information
@@ -164,8 +164,8 @@ class Worker:
         parser = MySqlParser(token_stream)
         mapper.parser = parser
         mapper.map_methods(self)
-        tree = mapper.mapper[DDLtype]['parsermethod']()
-        r = mapper.mapper[DDLtype]['extractor'](tree, DDLtype)
+        tree = mapper.mapper[ddl_type]['parsermethod']()
+        r = mapper.mapper[ddl_type]['extractor'](tree, ddl_type)
         return r
 
     def get_updated_columns(self, tree: ParserRuleContext) -> List[str]:
@@ -206,7 +206,7 @@ class Worker:
         target_columns = []
         return target_columns
 
-    def parse_create_table(self, tree: ParserRuleContext, DDLtype: str) \
+    def parse_create_table(self, tree: ParserRuleContext, ddl_type: str) \
             -> Dict:
 
         """
@@ -214,7 +214,7 @@ class Worker:
         returns as much information as possible in each case.
 
         :param tree: AST object parsed
-        :param DDLtype: DDL statement type for Query object instantiation
+        :param ddl_type: DDL statement type for Query object instantiation
         :return: Query object containing the statement information
         """
 
@@ -223,12 +223,12 @@ class Worker:
 
         # Parse create table column statements
         if isinstance(tree, MySqlParser.ColumnCreateTableContext):
-            q['operation'] = f'{DDLtype} COLUMNS'
+            q['operation'] = f'{ddl_type} COLUMNS'
             q['target_columns'] = self.get_create_table_columns(tree)
 
         # Parse create table query statements
         elif isinstance(tree, MySqlParser.QueryCreateTableContext):
-            q['operation'] = f'{DDLtype} QUERY'
+            q['operation'] = f'{ddl_type} QUERY'
             q['from_table'] = self.get_source_tables_insert(tree, 'from')
             q['join_table'] = self.get_source_tables_insert(tree, 'join')
             try:
@@ -239,7 +239,7 @@ class Worker:
 
         # Parse create table like statements
         elif isinstance(tree, MySqlParser.CopyCreateTableContext):
-            q['operation'] = f'{DDLtype} LIKE'
+            q['operation'] = f'{ddl_type} LIKE'
             target = self.parse_object_name(tree.tableName(0).getText().lower())
             q['target_table'] = {'schema': target[0], 'name': target[1]}
             source = self.parse_object_name(tree.tableName(1).getText().lower())
@@ -266,38 +266,38 @@ class Worker:
 
         return columns
 
-    def parse_truncate(self, tree: ParserRuleContext, DDLtype: str) -> Dict:
+    def parse_truncate(self, tree: ParserRuleContext, ddl_type: str) -> Dict:
 
         """
         Parse target table from TRUNCATE statement.
 
         :param tree: AST object parsed
-        :param DDLtype: DDL statement type is passed for Query object
+        :param ddl_type: DDL statement type is passed for Query object
         instantiation
         :return: Query object containing the statement information
         """
 
-        q = {'operation': DDLtype,
+        q = {'operation': ddl_type,
              'target_table': self.get_target_table(tree)}
         return q
 
-    def parse_drop_table(self, tree: ParserRuleContext, DDLtype: str) -> Dict:
+    def parse_drop_table(self, tree: ParserRuleContext, ddl_type: str) -> Dict:
 
         """
         Parse target table from DROP TABLE statement.
 
         :param tree: AST object parsed
-        :param DDLtype: DDL statement type is passed for Query object
+        :param ddl_type: DDL statement type is passed for Query object
         instantiation
         :return: Query object containing the statement information
         """
 
-        q = {'operation': DDLtype}
+        q = {'operation': ddl_type}
         target = self.parse_object_name(tree.tables().getText().lower())
         q['target_table'] = {'name': target[1], 'schema': target[0]}
         return q
 
-    def parse_update(self, tree: ParserRuleContext, DDLtype: str) \
+    def parse_update(self, tree: ParserRuleContext, ddl_type: str) \
             -> Optional[Dict]:
 
         """
@@ -305,12 +305,12 @@ class Worker:
         an UPDATE statement.
 
         :param tree: AST object parsed
-        :param DDLtype: DDL statement type is passed for Query object
+        :param ddl_type: DDL statement type is passed for Query object
         instantiation
         :return: Query object containing the statement information
         """
 
-        q = {'operation': DDLtype,
+        q = {'operation': ddl_type,
              'target_table': self.get_target_table(tree),
              'join_table': self.get_source_tables_update(tree),
              'target_columns': self.get_updated_columns(tree)}
@@ -335,19 +335,19 @@ class Worker:
                 join_table = self.get_source_tables_insert(child, 'join')
                 return from_table, join_table
 
-    def parse_insert(self, tree: ParserRuleContext, DDLtype: str) -> Dict:
+    def parse_insert(self, tree: ParserRuleContext, ddl_type: str) -> Dict:
 
         """
         Parses target table, source table(s) and target columns from
         an INSERT statement.
 
         :param tree: AST object parsed
-        :param DDLtype: DDL statement type for Query object instantiation
+        :param ddl_type: DDL statement type for Query object instantiation
         :return: Query object containing the statement information
         """
 
         from_table, join_table = self.get_inserted_tables(tree)
-        q = {'operation': DDLtype,
+        q = {'operation': ddl_type,
              'target_table': self.get_target_table(tree),
              'from_table': from_table,
              'join_table': join_table,
