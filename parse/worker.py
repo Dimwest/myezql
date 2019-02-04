@@ -2,6 +2,7 @@ import os
 import re
 import multiprocessing as mp
 from parse.regex import procedure_regex, NAME_REGEX
+from colorama import Fore, Style
 from sqlparse import format as fmt
 from antlr4 import ParserRuleContext, TerminalNode, ErrorNode, \
     InputStream, CommonTokenStream
@@ -9,19 +10,24 @@ from parse.lexer import MySqlLexer
 from parse.parser import MySqlParser
 from parse.mapper import Mapper
 from typing import List, Tuple, Optional, Dict
+from utils.processing import flatten, merge_results
+from utils.logging import *
+from copy import deepcopy
 
 
 class Worker:
 
     """Core object managing all the parsing operations using ANTLR4-generated parser"""
 
-    def __init__(self, default_schema: str, delimiter: str, mode: str) -> None:
+    def __init__(self, default_schema: str, delimiter: str, pmode: str, fmode: str) -> None:
 
         self.results = []
         self.delimiter = delimiter
         self.proc_regex = procedure_regex(self.delimiter)
         self.default_schema = default_schema
-        self.mode = mode
+        self.pmode = pmode
+        self.fmode = fmode
+        self.ctr = 0
 
     def run(self, path):
 
@@ -62,51 +68,56 @@ class Worker:
         results = []
 
         with open(path, 'r') as file:
+
+            logger.info(f'{Fore.MAGENTA}Parsing {path} ...{Style.RESET_ALL}')
+
             # Grammar is case-sensitive. Input has to be converted
             # to upper case before parsing
             file_input = fmt(file.read().upper().replace('`', ''), strip_comments=True).strip()
 
             # Parsing modes switch
-            if self.mode == 'procedure':
+            if self.pmode == 'procedure':
                 procedures = re.findall(self.proc_regex, file_input)
                 for proc in procedures:
                     results.append(self.parse_str(path, proc))
-            elif self.mode == 'ddl':
+            elif self.pmode == 'ddl':
                 results.append(self.parse_str(path, file_input))
+
+            logger.info(f'{Fore.GREEN}Successfully parsed {path}{Style.RESET_ALL}')
 
         return results
 
     def parse_str(self, path: str, p: str) -> Dict:
 
         """
-        Gets all configured DML statements inside a procedure body,
+        Gets all configured DDL statements inside a procedure body,
         parses them, stores results in Procedure objects, and appends
         these objects to self.results.
 
         :param path: the procedure path is passed here as the Procedure
         instantiation requires it.
         :param p: procedure body string
-        :param mode: parsing mode, "procedure" or "ddl"
+        :param pmode: parsing mode, can be "procedure" or "ddl"
         """
 
-        if self.mode == 'procedure':
+        self.ctr += 1
+
+        if self.pmode == 'procedure':
             schema, name = self.get_procedure_name(p)
-        elif self.mode == 'ddl':
-            schema, name = '', path
         else:
-            raise ValueError('Invalid parsing mode, should be one of: procedure, ddl')
+            schema, name = '', path
 
         proc = {'schema': schema,
                 'name': name,
                 'path': path,
                 'statements': []}
 
-        mapper = Mapper(self.delimiter, self.mode)
+        mapper = Mapper(self.delimiter, self.pmode)
 
-        for dmltype in mapper.extract_regexes.keys():
-            statements = re.findall(mapper.extract_regexes[dmltype], p)
+        for ddl_type in mapper.extract_regexes.keys():
+            statements = re.findall(mapper.extract_regexes[ddl_type], p)
             for s in statements:
-                q = self.parse_statement(dmltype, s, mapper)
+                q = self.parse_statement(ddl_type, s, mapper)
                 if q:
                     q['procedure'] = name
                     proc['statements'].append(q)
@@ -145,14 +156,14 @@ class Worker:
 
         return schema, name
 
-    def parse_statement(self, dmltype: str, s: str, mapper: Mapper) -> Dict:
+    def parse_statement(self, ddl_type: str, s: str, mapper: Mapper) -> Dict:
 
         """
-        Cleans DML statement, creates parsing objects, and returns a
+        Cleans DDL statement, creates parsing objects, and returns a
         Query object.
 
-        :param dmltype: type of DML statement being parsed
-        :param s: DML statement string
+        :param ddl_type: type of DDL statement being parsed
+        :param s: DDL statement string
         :param mapper: Mapper object
         :return: Query object containing the statement information
         """
@@ -163,8 +174,8 @@ class Worker:
         parser = MySqlParser(token_stream)
         mapper.parser = parser
         mapper.map_methods(self)
-        tree = mapper.mapper[dmltype]['parsermethod']()
-        r = mapper.mapper[dmltype]['extractor'](tree, dmltype)
+        tree = mapper.mapper[ddl_type]['parsermethod']()
+        r = mapper.mapper[ddl_type]['extractor'](tree, ddl_type)
         return r
 
     def get_updated_columns(self, tree: ParserRuleContext) -> List[str]:
@@ -205,7 +216,7 @@ class Worker:
         target_columns = []
         return target_columns
 
-    def parse_create_table(self, tree: ParserRuleContext, dmltype: str) \
+    def parse_create_table(self, tree: ParserRuleContext, ddl_type: str) \
             -> Dict:
 
         """
@@ -213,7 +224,7 @@ class Worker:
         returns as much information as possible in each case.
 
         :param tree: AST object parsed
-        :param dmltype: DML statement type for Query object instantiation
+        :param ddl_type: DDL statement type for Query object instantiation
         :return: Query object containing the statement information
         """
 
@@ -222,12 +233,12 @@ class Worker:
 
         # Parse create table column statements
         if isinstance(tree, MySqlParser.ColumnCreateTableContext):
-            q['operation'] = f'{dmltype} COLUMNS'
+            q['operation'] = f'{ddl_type} COLUMNS'
             q['target_columns'] = self.get_create_table_columns(tree)
 
         # Parse create table query statements
         elif isinstance(tree, MySqlParser.QueryCreateTableContext):
-            q['operation'] = f'{dmltype} QUERY'
+            q['operation'] = f'{ddl_type} QUERY'
             q['from_table'] = self.get_source_tables_insert(tree, 'from')
             q['join_table'] = self.get_source_tables_insert(tree, 'join')
             try:
@@ -238,7 +249,7 @@ class Worker:
 
         # Parse create table like statements
         elif isinstance(tree, MySqlParser.CopyCreateTableContext):
-            q['operation'] = f'{dmltype} LIKE'
+            q['operation'] = f'{ddl_type} LIKE'
             target = self.parse_object_name(tree.tableName(0).getText().lower())
             q['target_table'] = {'schema': target[0], 'name': target[1]}
             source = self.parse_object_name(tree.tableName(1).getText().lower())
@@ -265,38 +276,38 @@ class Worker:
 
         return columns
 
-    def parse_truncate(self, tree: ParserRuleContext, dmltype: str) -> Dict:
+    def parse_truncate(self, tree: ParserRuleContext, ddl_type: str) -> Dict:
 
         """
         Parse target table from TRUNCATE statement.
 
         :param tree: AST object parsed
-        :param dmltype: DML statement type is passed for Query object
+        :param ddl_type: DDL statement type is passed for Query object
         instantiation
         :return: Query object containing the statement information
         """
 
-        q = {'operation': dmltype,
+        q = {'operation': ddl_type,
              'target_table': self.get_target_table(tree)}
         return q
 
-    def parse_drop_table(self, tree: ParserRuleContext, dmltype: str) -> Dict:
+    def parse_drop_table(self, tree: ParserRuleContext, ddl_type: str) -> Dict:
 
         """
         Parse target table from DROP TABLE statement.
 
         :param tree: AST object parsed
-        :param dmltype: DML statement type is passed for Query object
+        :param ddl_type: DDL statement type is passed for Query object
         instantiation
         :return: Query object containing the statement information
         """
 
-        q = {'operation': dmltype}
+        q = {'operation': ddl_type}
         target = self.parse_object_name(tree.tables().getText().lower())
         q['target_table'] = {'name': target[1], 'schema': target[0]}
         return q
 
-    def parse_update(self, tree: ParserRuleContext, dmltype: str) \
+    def parse_update(self, tree: ParserRuleContext, ddl_type: str) \
             -> Optional[Dict]:
 
         """
@@ -304,12 +315,12 @@ class Worker:
         an UPDATE statement.
 
         :param tree: AST object parsed
-        :param dmltype: DML statement type is passed for Query object
+        :param ddl_type: DDL statement type is passed for Query object
         instantiation
         :return: Query object containing the statement information
         """
 
-        q = {'operation': dmltype,
+        q = {'operation': ddl_type,
              'target_table': self.get_target_table(tree),
              'join_table': self.get_source_tables_update(tree),
              'target_columns': self.get_updated_columns(tree)}
@@ -334,19 +345,19 @@ class Worker:
                 join_table = self.get_source_tables_insert(child, 'join')
                 return from_table, join_table
 
-    def parse_insert(self, tree: ParserRuleContext, dmltype: str) -> Dict:
+    def parse_insert(self, tree: ParserRuleContext, ddl_type: str) -> Dict:
 
         """
         Parses target table, source table(s) and target columns from
         an INSERT statement.
 
         :param tree: AST object parsed
-        :param dmltype: DML statement type for Query object instantiation
+        :param ddl_type: DDL statement type for Query object instantiation
         :return: Query object containing the statement information
         """
 
         from_table, join_table = self.get_inserted_tables(tree)
-        q = {'operation': dmltype,
+        q = {'operation': ddl_type,
              'target_table': self.get_target_table(tree),
              'from_table': from_table,
              'join_table': join_table,
@@ -368,17 +379,17 @@ class Worker:
             if isinstance(child, MySqlParser.DeleteStatementValueContext):
                 return self.get_source_tables_insert(child, 'from')
 
-    def parse_delete(self, tree: ParserRuleContext, dmltype: str) -> Dict:
+    def parse_delete(self, tree: ParserRuleContext, ddl_type: str) -> Dict:
 
         """
         Parses target table name from a DELETE statement.
 
         :param tree: AST object parsed
-        :param dmltype: DML statement type for Query object instantiation
+        :param ddl_type: DDL statement type for Query object instantiation
         :return: Query object containing the statement information
         """
 
-        q = {'operation': dmltype,
+        q = {'operation': ddl_type,
              'target_table': self.get_target_table(tree)}
 
         return q
@@ -477,3 +488,128 @@ class Worker:
             elif not (isinstance(c, TerminalNode) or isinstance(c, ErrorNode)):
                 tables.extend(self.get_all_tables(c))
         return tables
+
+    def tables_filter(self, tables: List[Dict]) -> None:
+
+        """
+        Filters statements based on list of tables and filtering mode set for
+        the worker.
+
+        :param tables: list of tables to filter on
+        """
+
+        if self.fmode == 'simple':
+            self.simple_filter(tables)
+        elif self.fmode == 'rec':
+            self.recursive_filter(tables)
+
+    def simple_filter(self, tables: List[Dict]) -> None:
+
+        """
+        Filters statements based on a list of tables: only statements containing
+        direct parents/children of the selected tables will be kept in results.
+
+        :param tables: list of table dictionaries with keys "schema" and "name"
+        """
+
+        for p in self.results:
+            p['statements'] = [s for s in p['statements']
+                               if any(t in s['from_table'] for t in tables if s.get('from_table'))
+                               or any(t in s['join_table'] for t in tables if s.get('join_table'))
+                               or any(t == s['target_table'] for t in tables)]
+
+    def recursive_filter_parents(self, tables: List[Dict], parents_done: List[Dict]=None) -> List[Dict]:
+
+        """
+        Recursively filters statements containing all parent tables relating to the list
+        of specified tables.
+
+        :param tables: list of tables which parents have to be filtered
+        :param parents_done: list of parent tables already fetched, to avoid infinite recursion
+        :return: filtered list of procedure/file dictionaries
+        """
+
+        filtered_results = []
+        results = deepcopy(self.results)
+
+        # For all procedures/files in results
+        for p in results:
+
+            # Filter only statements which contain one of the filtered tables as target
+            p['statements'] = [s for s in p['statements']
+                               if any(t == s['target_table'] for t in tables)]
+
+            # Add this filtered procedure/file to results
+            filtered_results.append(p)
+
+            # Get parent (source) tables in these statements
+            parents = [s['from_table'] for s in p['statements'] if s.get('from_table')]
+            parents.extend([s['join_table'] for s in p['statements'] if s.get('join_table')])
+            parents = flatten(parents)
+
+            if parents_done:
+                parents = [x for x in parents if x not in parents_done]
+            else:
+                parents_done = []
+
+            parents_done.extend(parents)
+
+            # Repeat the operation for the parent tables if any
+            if parents:
+                filtered_results.extend(self.recursive_filter_parents(parents, parents_done))
+
+        return filtered_results
+
+    def recursive_filter_children(self, tables: List[Dict], children_done: List[Dict]=None) -> List[Dict]:
+
+        """
+        Recursively filters statements containing all child tables relating to the list
+        of specified tables.
+
+        :param tables: list of tables which parents have to be filtered
+        :param children_done: list of child tables already fetched, to avoid infinite recursion
+        :return: filtered list of procedure/file dictionaries
+        """
+
+        filtered_results = []
+        results = deepcopy(self.results)
+
+        # For all procedures/files in results
+        for p in results:
+
+            # Filter only statements which contain one of the filtered tables as source
+            p['statements'] = [s for s in p['statements']
+                               if any(t in s['from_table'] for t in tables if s.get('from_table'))
+                               or any(t in s['join_table'] for t in tables if s.get('join_table'))]
+
+            # Add this filtered procedure/file to results
+            filtered_results.append(p)
+
+            # Get children (target) tables in these statements
+            children = [s['target_table'] for s in p['statements']]
+
+            if children_done:
+                children = [x for x in children if x not in children_done]
+            else:
+                children_done = []
+
+            children_done.extend(children)
+
+            # Repeat the operation for the parent tables if any
+            if children:
+                filtered_results.extend(self.recursive_filter_children(children, children_done))
+
+        return filtered_results
+
+    def recursive_filter(self, tables: List[Dict]) -> None:
+
+        """
+        Recursively filters parent and children tables relating to a
+        list of specified tables.
+
+        :param tables: list of table dictionaries to filter on
+        """
+
+        results = self.recursive_filter_parents(tables)
+        results += self.recursive_filter_children(tables)
+        self.results = merge_results(results)

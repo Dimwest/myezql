@@ -3,6 +3,7 @@ from typing import List, Dict
 
 
 def beautify(results: List[Dict]) -> None:
+
     """
     Convenience function displaying the parsing results in a colored and human-readable format using
     colorama (as it works on all platforms)
@@ -10,7 +11,7 @@ def beautify(results: List[Dict]) -> None:
     :return: None, only displays the results
     """
 
-    msg = f'\n====> Parsing results <===='
+    msg = f'\n'
 
     for p in results:
 

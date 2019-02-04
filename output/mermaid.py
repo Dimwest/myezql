@@ -1,6 +1,8 @@
 from typing import List, Dict
 from bs4 import BeautifulSoup
 
+data_flow_ops = ['INSERT', 'REPLACE', 'UPDATE', 'CREATE TABLE QUERY']
+
 
 class Mermaid:
 
@@ -14,7 +16,15 @@ class Mermaid:
         with open('./output/resources/template.html', 'r') as template:
             self.soup = BeautifulSoup(template.read(), features="html.parser")
 
-    def arrow(self, statement, statement_part):
+    def arrow(self, statement, statement_part) -> None:
+
+        """
+        Generate Markdown code representing mermaid.js arrows and adds them to results
+
+        :param statement: statement dictionary
+        :param statement_part: statement key to get tables from, should be
+        from_table or join_table.
+        """
 
         if statement.get(statement_part):
             for table in statement.get(statement_part):
@@ -30,14 +40,22 @@ class Mermaid:
 
     def tables_chart(self, path) -> None:
 
-        # Creating Mermaid markdown string
+        """
+        Creates HTML flowchart file (using mermaid.js) representing tables data flows
+        and saves it at specified path.
+
+        :param path: output HTML file destination
+        """
+
+        # Creating mermaid markdown arrows' list
         for p in self.input:
             # For all statements in parsed procedure/file
             for s in p['statements']:
-                self.arrow(s, 'from_table')
-                self.arrow(s, 'join_table')
+                if s['operation'] in data_flow_ops:
+                    self.arrow(s, 'from_table')
+                    self.arrow(s, 'join_table')
 
-        self.tables_flow = list(set(self.tables_flow))
+        # Generate markdown string from the list of arrows
         self.tables_flow.insert(0, self.graph_type)
         self.output = '\n'.join(self.tables_flow)
 
