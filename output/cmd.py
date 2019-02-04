@@ -10,7 +10,7 @@ def beautify(results: List[Dict]) -> None:
     :return: None, only displays the results
     """
 
-    msg = f'\n====> Parsing results <===='
+    msg = f'\n'
 
     for p in results:
 

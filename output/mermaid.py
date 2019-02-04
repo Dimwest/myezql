@@ -1,7 +1,7 @@
 from typing import List, Dict
 from bs4 import BeautifulSoup
 
-data_flow_ops = ['INSERT', 'REPLACE', 'UPDATE']
+data_flow_ops = ['INSERT', 'REPLACE', 'UPDATE', 'CREATE TABLE QUERY']
 
 
 class Mermaid:

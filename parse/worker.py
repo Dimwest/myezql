@@ -2,6 +2,7 @@ import os
 import re
 import multiprocessing as mp
 from parse.regex import procedure_regex, NAME_REGEX
+from colorama import Fore, Style
 from sqlparse import format as fmt
 from antlr4 import ParserRuleContext, TerminalNode, ErrorNode, \
     InputStream, CommonTokenStream
@@ -10,6 +11,7 @@ from parse.parser import MySqlParser
 from parse.mapper import Mapper
 from typing import List, Tuple, Optional, Dict
 from utils.processing import flatten, merge_results
+from utils.logging import *
 from copy import deepcopy
 
 
@@ -25,6 +27,7 @@ class Worker:
         self.default_schema = default_schema
         self.pmode = pmode
         self.fmode = fmode
+        self.ctr = 0
 
     def run(self, path):
 
@@ -65,6 +68,9 @@ class Worker:
         results = []
 
         with open(path, 'r') as file:
+
+            logger.info(f'{Fore.MAGENTA}Parsing {path} ...{Style.RESET_ALL}')
+
             # Grammar is case-sensitive. Input has to be converted
             # to upper case before parsing
             file_input = fmt(file.read().upper().replace('`', ''), strip_comments=True).strip()
@@ -76,6 +82,8 @@ class Worker:
                     results.append(self.parse_str(path, proc))
             elif self.pmode == 'ddl':
                 results.append(self.parse_str(path, file_input))
+
+            logger.info(f'{Fore.GREEN}Successfully parsed {path}{Style.RESET_ALL}')
 
         return results
 
@@ -91,6 +99,8 @@ class Worker:
         :param p: procedure body string
         :param pmode: parsing mode, can be "procedure" or "ddl"
         """
+
+        self.ctr += 1
 
         if self.pmode == 'procedure':
             schema, name = self.get_procedure_name(p)

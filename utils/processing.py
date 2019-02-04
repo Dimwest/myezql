@@ -1,6 +1,17 @@
 from typing import List, Dict
 
 
+def names_to_tables(tables: List[str]) -> List[Dict]:
+
+    """
+    Transform a list of table names into a list of dictionaries with keys schema and name
+    :param tables: list ot table names
+    :return: list of table dictionaries
+    """
+
+    return [dict(zip(['schema', 'name'], t.split('.'))) for t in tables]
+
+
 def flatten(l: List[List[Dict]]) -> List[Dict]:
 
     """

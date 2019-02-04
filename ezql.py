@@ -1,5 +1,6 @@
 import fire
 from configparser import ConfigParser
+from utils.processing import names_to_tables
 from utils.validation import *
 from utils.logging import *
 from parse.worker import Worker
@@ -46,14 +47,6 @@ class MyEzQl(object):
         parser = ConfigParser()
         parser.read('config.ini')
 
-        # Validate arguments
-        validate_input_path(i)
-        validate_output_path(chart, 'html')
-        validate_output_path(json, 'json')
-        tables = validate_tables(tables)
-        validate_parsing_mode(pmode)
-        validate_filter_mode(tables, fmode)
-
         # Set default schema to config value if not provided
         ds = parser['parser_config']['default_schema'] if not ds else ds
 
@@ -64,11 +57,13 @@ class MyEzQl(object):
         pmode = parser['parser_config']['default_parsing_mode'] if not pmode else pmode
         fmode = parser['parser_config']['default_filter_mode'] if not fmode else fmode
 
+        validate_args(i, chart, json, tables, pmode, fmode)
+
         logger.info(f'\n\nStart parsing with parameters:'
                     f'\n\n  default schema --> {ds}'
                     f'\n  delimiter      --> {dl}'
                     f'\n  parsing mode   --> {pmode}'
-                    f"\n  filter mode    --> {fmode if tables else 'off'} {'on ' + tables if tables else ''}\n")
+                    f"\n  filter mode    --> {fmode if tables else 'off'} {'on ' + str(tables) if tables else ''}\n")
 
         # Configure and run parser
         worker = Worker(default_schema=ds, delimiter=dl, pmode=pmode, fmode=fmode)
@@ -76,6 +71,7 @@ class MyEzQl(object):
 
         # If tables filter defined, apply filtering to results
         if tables:
+            tables = names_to_tables(tables)
             worker.tables_filter(tables)
 
         # Pretty print results
