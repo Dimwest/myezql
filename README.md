@@ -115,7 +115,6 @@ difficult to read through.
 
 
 #### Refactoring:
-- [ ] Finish commenting
 - [x] Refactor output functions
 - [x] Replace unnecessary SQL objects by dictionaries
 - [x] Improve project structure
@@ -124,6 +123,8 @@ difficult to read through.
 #### Tests / build:
 - [ ] Add coverage report
 - [ ] Write tests for output functions
+- [ ] Write tests for filter functions
+- [ ] Write proper end-to-end test for all user input cases
 - [x] Add Travis CI setup
 - [x] Finish unit and e2e testing of parsing features
 - [x] Test all statements

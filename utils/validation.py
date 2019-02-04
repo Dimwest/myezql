@@ -4,7 +4,19 @@ from utils.paths import is_path_creatable, is_pathname_valid
 
 
 def validate_args(i: str, chart: str, json: str, tables: Optional[List[str]],
-                  pmode: Optional[str] , fmode: Optional[str]) -> None:
+                  pmode: Optional[str], fmode: Optional[str]) -> None:
+
+    """
+    Validate all CLI arguments before execution, raise clear exceptions if
+    validation does not succeed.
+
+    :param i: input file/directory path
+    :param chart: output html flowchart path
+    :param json: output json file path
+    :param tables: list of table names, defaults to None
+    :param pmode: parsing mode, defaults to None
+    :param fmode: filter mode, defaults to None
+    """
 
     validate_input_path(i)
     validate_output_path(chart, 'html')
