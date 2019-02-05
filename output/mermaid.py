@@ -1,5 +1,6 @@
 from typing import List, Dict
 from bs4 import BeautifulSoup
+from pathlib import Path
 
 data_flow_ops = ['INSERT', 'REPLACE', 'UPDATE', 'CREATE TABLE QUERY']
 
@@ -13,7 +14,7 @@ class Mermaid:
         self.functions_flow = []
         self.input = results
         self.output = ''
-        with open('./output/resources/template.html', 'r') as template:
+        with open(f'{Path(__file__).parent}/resources/template.html', 'r') as template:
             self.soup = BeautifulSoup(template.read(), features="html.parser")
 
     def arrow(self, statement, statement_part) -> None:
