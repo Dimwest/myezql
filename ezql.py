@@ -8,6 +8,7 @@ from output.cmd import beautify
 from output.mermaid import Mermaid
 from output.json import to_json
 from typing import Optional, List
+from pathlib import Path
 
 
 class MyEzQl(object):
@@ -44,18 +45,18 @@ class MyEzQl(object):
         """
 
         # Read config
-        parser = ConfigParser()
-        parser.read('config.ini')
+        cfg = ConfigParser()
+        cfg.read(f'{Path(__file__).parent}/config.ini')
 
         # Set default schema to config value if not provided
-        ds = parser['parser_config']['default_schema'] if not ds else ds
+        ds = cfg['parser_config']['default_schema'] if not ds else ds
 
         # Set delimiter to config value if not provided
-        dl = parser['parser_config']['delimiter'] if not dl else dl
+        dl = cfg['parser_config']['delimiter'] if not dl else dl
 
         # Set parsing mode to config value if not provided
-        pmode = parser['parser_config']['default_parsing_mode'] if not pmode else pmode
-        fmode = parser['parser_config']['default_filter_mode'] if not fmode else fmode
+        pmode = cfg['parser_config']['default_parsing_mode'] if not pmode else pmode
+        fmode = cfg['parser_config']['default_filter_mode'] if not fmode else fmode
 
         validate_args(i, chart, json, tables, pmode, fmode)
 

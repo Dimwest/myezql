@@ -1,7 +1,7 @@
 import os
 import re
 import multiprocessing as mp
-from parse.regex import procedure_regex, NAME_REGEX
+from parse.regex import procedure_regex, proc_name_regex
 from colorama import Fore, Style
 from sqlparse import format as fmt
 from antlr4 import ParserRuleContext, TerminalNode, ErrorNode, \
@@ -27,7 +27,6 @@ class Worker:
         self.default_schema = default_schema
         self.pmode = pmode
         self.fmode = fmode
-        self.ctr = 0
 
     def run(self, path):
 
@@ -100,8 +99,6 @@ class Worker:
         :param pmode: parsing mode, can be "procedure" or "ddl"
         """
 
-        self.ctr += 1
-
         if self.pmode == 'procedure':
             schema, name = self.get_procedure_name(p)
         else:
@@ -133,7 +130,7 @@ class Worker:
         :return: tuple (schema_string, name_string)
         """
 
-        name = re.search(NAME_REGEX, p).group(1).lower()
+        name = re.search(proc_name_regex, p).group(1).lower()
         schema, name = self.parse_object_name(name)
         return schema, name
 
@@ -409,7 +406,7 @@ class Worker:
 
         for c in tree.getChildren():
             if isinstance(c, MySqlParser.JoinPartContext):
-                tables.extend(self.get_all_tables(c))
+                tables.extend(self.get_tables_names(c))
             elif not (isinstance(c, TerminalNode) or isinstance(c, ErrorNode)):
                 tables.extend(self.get_source_tables_update(c))
 
@@ -438,11 +435,11 @@ class Worker:
                 for i in froms.tableSource():
                     if clause == 'from':
                         f = i.tableSourceItem()
-                        tables.extend(self.get_all_tables(f))
+                        tables.extend(self.get_tables_names(f))
                     else:
                         f = i.joinPart()
                         for x in f:
-                            tables.extend(self.get_all_tables(x))
+                            tables.extend(self.get_tables_names(x))
             elif not (isinstance(c, TerminalNode) or isinstance(c, ErrorNode)):
                 tables.extend(self.get_source_tables_insert(c, clause))
         return tables
@@ -466,7 +463,7 @@ class Worker:
             elif not (isinstance(c, TerminalNode) or isinstance(c, ErrorNode)):
                 return self.get_target_table(c)
 
-    def get_all_tables(self, tree: ParserRuleContext) -> List[Dict]:
+    def get_tables_names(self, tree: ParserRuleContext) -> List[Dict]:
 
         """
         Gets all table names inside a tree, appends them to a list of
@@ -484,9 +481,9 @@ class Worker:
                 tables.append(t)
             elif isinstance(c, MySqlParser.QueryExpressionContext):
                 c = c.querySpecification()
-                tables.extend(self.get_all_tables(c))
+                tables.extend(self.get_tables_names(c))
             elif not (isinstance(c, TerminalNode) or isinstance(c, ErrorNode)):
-                tables.extend(self.get_all_tables(c))
+                tables.extend(self.get_tables_names(c))
         return tables
 
     def tables_filter(self, tables: List[Dict]) -> None:

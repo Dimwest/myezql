@@ -33,6 +33,6 @@ def truncate_regex(delimiter):
     return re.compile(r'TRUNCATE\s+.*?{}'.format(delimiter), re.DOTALL | re.IGNORECASE)
 
 
-NAME_REGEX = re.compile(
+proc_name_regex = re.compile(
         r'(?<=CREATE\sPROCEDURE\s)(?:IF\sNOT\sEXISTS\s)?([A-Za-z0-9._-]+)',
         re.IGNORECASE)

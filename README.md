@@ -8,6 +8,27 @@ by pretty-printing parsing results and exporting them as HTML flowcharts.
 
 ## Tutorial
 
+### Install
+
+MyEzQL is currently not packaged yet (hopefully soon !), hence cannot be installed with pip.
+It can easily be used with the following commands.
+
+```bash
+cd my/target/directory
+git clone git@github.com:Dimwest/MyEzQL.git
+cd MyEzQL/
+make venv
+source venv/bin/activate
+```
+
+Tip: As the only command used by the script is "parse", and the only required argument is the input path --i, you can set the following alias:
+
+```bash
+alias myezql="source /path/to/MyEzQL/venv/bin/activate && python3 /path/to/MyEzQL/ezql.py parse --i"
+```
+
+Don't forget to deactivate the virtual environment when you're done ;)
+
 ### Basic functionalities
 
 Read from any SQL file or directory containing SQL files.
@@ -114,7 +135,8 @@ difficult to read through.
 - [x] Create table as
 
 
-#### Refactoring:
+#### Refactoring / documenting:
+- [x] Add install documentation
 - [x] Refactor output functions
 - [x] Replace unnecessary SQL objects by dictionaries
 - [x] Improve project structure
@@ -126,17 +148,16 @@ difficult to read through.
 - [ ] Write tests for filter functions
 - [ ] Write proper end-to-end test for all user input cases
 - [x] Add Travis CI setup
-- [x] Finish unit and e2e testing of parsing features
+- [x] Improve unit and e2e testing of parsing features
 - [x] Test all statements
 - [x] Introduce end-to-end testing of processing
-- [x] Add most important unit tests
+- [x] Add unit tests
 
 #### Tool functionalities:
-- [ ] Analysis features: table/function childs, parents, etc.
-- [ ] Add arguments typecheck 
 - [ ] Improve logging, introduce verbose arg
 - [ ] Log execution summary
-- [ ] Add install script
+- [x] Analysis features: table/function childs, parents, etc.
+- [x] Improve arguments validation
 - [x] Add proper config file
 - [x] Add HTML flowchart creation using Mermaid
 - [x] New DDL statements
