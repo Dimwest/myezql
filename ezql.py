@@ -86,7 +86,7 @@ class MyEzQl(object):
 
         if json:
             to_json(worker.results, json)
-            logger.info(f'{chart} successfully saved')
+            logger.info(f'{json} successfully saved')
 
 
 if __name__ == '__main__':

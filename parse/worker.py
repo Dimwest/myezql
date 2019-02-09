@@ -22,6 +22,8 @@ class Worker:
     def __init__(self, default_schema: str, delimiter: str, pmode: str, fmode: str) -> None:
 
         self.results = []
+        self.empty_procedures = []
+        self.invalid_statements = []
         self.delimiter = delimiter
         self.proc_regex = procedure_regex(self.delimiter)
         self.default_schema = default_schema
@@ -34,7 +36,26 @@ class Worker:
             self.parse_dir(path)
         elif os.path.isfile(path):
             self.results = self.parse_file(path)
-    
+
+        self.remove_invalid_objects()
+
+    def remove_invalid_objects(self):
+
+        """
+        Remove empty procedures and invalid statements from results and log
+        filtering stats.
+        """
+
+        self.empty_procedures = [p['name'] for p in self.results if not p['statements']]
+        self.results = [p for p in self.results if p['statements']]
+        logger.info(f"Removed {len(self.empty_procedures)} empty procedures from results: {self.empty_procedures}")
+
+        for p in self.results:
+            self.invalid_statements.extend([x for x in p['statements'] if any(x[k] is None for k in x.keys())])
+            p['statements'] = [x for x in p['statements'] if not any(x[k] is None for k in x.keys())]
+
+        logger.info(f"{len(self.invalid_statements)} invalid statements removed from results")
+
     def parse_dir(self, dir_path: str) -> None:
 
         """
@@ -68,7 +89,7 @@ class Worker:
 
         with open(path, 'r') as file:
 
-            logger.info(f'{Fore.MAGENTA}Parsing {path} ...{Style.RESET_ALL}')
+            logger.info(f'{Fore.LIGHTYELLOW_EX}Parsing {path} ...{Style.RESET_ALL}')
 
             # Grammar is case-sensitive. Input has to be converted
             # to upper case before parsing
@@ -322,12 +343,10 @@ class Worker:
              'join_table': self.get_source_tables_update(tree),
              'target_columns': self.get_updated_columns(tree)}
 
-        # TODO -> Get rid of this if statement
-        if q['target_table'] and q['join_table']:
-            return q
+        return q
 
     def get_inserted_tables(self, tree: ParserRuleContext) \
-            -> Tuple[List[Dict], List[Dict]]:
+            -> Tuple[Optional[List[Dict]], Optional[List[Dict]]]:
 
         """
         Gets all source tables from an INSERT statement.
@@ -341,6 +360,8 @@ class Worker:
                 from_table = self.get_source_tables_insert(child, 'from')
                 join_table = self.get_source_tables_insert(child, 'join')
                 return from_table, join_table
+
+        return None, None
 
     def parse_insert(self, tree: ParserRuleContext, ddl_type: str) -> Dict:
 

@@ -1,4 +1,5 @@
 import logging
+from typing import Callable
 from time import time
 import sys
 
@@ -10,7 +11,12 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
-def with_logging(func):
+def with_logging(func: Callable) -> Callable:
+
+    """
+    Decorator used to for main function logging
+    :param func: target function
+    """
     def wrapper(*args, **kwargs):
 
         logger.info(f'Running: {func.__name__}')
