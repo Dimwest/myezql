@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 from bs4 import BeautifulSoup
 from pathlib import Path
 
@@ -17,7 +17,7 @@ class Mermaid:
         with open(f'{Path(__file__).parent}/resources/template.html', 'r') as template:
             self.soup = BeautifulSoup(template.read(), features="html.parser")
 
-    def arrow(self, statement, statement_part) -> None:
+    def arrow(self, statement: Dict, statement_part: str) -> None:
 
         """
         Generate Markdown code representing mermaid.js arrows and adds them to results
@@ -39,7 +39,7 @@ class Mermaid:
                 if arrow not in self.tables_flow:
                     self.tables_flow.append(arrow)
 
-    def tables_chart(self, path) -> None:
+    def tables_chart(self, path: Optional[str]) -> BeautifulSoup:
 
         """
         Creates HTML flowchart file (using mermaid.js) representing tables data flows
@@ -67,6 +67,9 @@ class Mermaid:
         chart.string = self.output
         mermaid.replace_with(chart)
 
-        # Save HTML file at specified path
-        with open(path, 'w') as outfile:
-            outfile.write(str(self.soup))
+        if path:
+            # Save HTML file at specified path
+            with open(path, 'w') as outfile:
+                outfile.write(str(self.soup))
+
+        return self.soup

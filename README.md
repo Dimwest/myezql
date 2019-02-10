@@ -143,10 +143,11 @@ difficult to read through.
 - [x] Add type hints
 
 #### Tests / build:
-- [ ] Add coverage report
-- [ ] Write tests for output functions
 - [ ] Write tests for filter functions
-- [ ] Write proper end-to-end test for all user input cases
+- [ ] Write tests proving unsupported cases (e.g. SQL keywords in aliases, etc.)
+- [ ] Add test coverage report
+- [x] Test on larger scale with 90 available procedure files
+- [x] Write tests for output functions
 - [x] Add Travis CI setup
 - [x] Improve unit and e2e testing of parsing features
 - [x] Test all statements
@@ -154,8 +155,9 @@ difficult to read through.
 - [x] Add unit tests
 
 #### Tool functionalities:
+- [ ] Add aliases support
+- [ ] Add column inheritance analysis (requires aliases support)
 - [ ] Improve logging, introduce verbose arg
-- [ ] Log execution summary
 - [x] Analysis features: table/function childs, parents, etc.
 - [x] Improve arguments validation
 - [x] Add proper config file
