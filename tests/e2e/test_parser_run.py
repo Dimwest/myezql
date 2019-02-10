@@ -18,7 +18,7 @@ from parse.worker import Worker
 def test_run_file(delimiter, mode, path, expected):
 
     """
-    Test core Run(path) function of the parser component and ensure results are correct.
+    Test core Run(path) function of the parser on SQL files file and ensure results are correct.
 
     :param delimiter: delimiter setting for parsing
     :param mode: parsing mode
@@ -32,12 +32,22 @@ def test_run_file(delimiter, mode, path, expected):
     for r in p.results:
         assert r in expected
 
+
 @pytest.mark.parametrize(
     "delimiter, mode, path, expected",
     [(';', 'ddl', test_dir_path, PARSE_DIR_EXPECTED_DDL),
      (';;', 'procedure', test_dir_path, PARSE_DIR_EXPECTED_PROC)]
 )
 def test_run_dir(delimiter, mode, path, expected):
+
+    """
+    Test core Run(path) function of the parser on a directory and ensure results are correct.
+
+    :param delimiter: delimiter setting for parsing
+    :param mode: parsing mode
+    :param path: path to the file/directory to parse
+    :param expected: expected results
+    """
 
     p = Worker(TEST_DEFAULT_SCHEMA, delimiter, mode, None)
     p.run(path)

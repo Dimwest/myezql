@@ -1,4 +1,5 @@
 from sqlparse import format as fmt
+from bs4 import BeautifulSoup
 
 test_dir_path = './tests/_resources/clean/'
 procedure_path = './tests/_resources/clean/procedure.sql'
@@ -400,3 +401,327 @@ PARSE_DIR_EXPECTED_DDL = [
 # Define parse_dir results for procedure mode
 
 PARSE_DIR_EXPECTED_PROC = [PARSE_FILE_PROCEDURE_EXPECTED]
+
+FILTER_TEST_INPUT = [{
+            "schema": "dwh",
+            "name": "mytestprocedure",
+            "path": "my/test/path.sql",
+            "statements": [
+                {
+                    "operation": "INSERT",
+                    "target_table": {
+                        "schema": "default_schema",
+                        "name": "test_table_1"
+                    },
+                    "from_table": [
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_2"
+                        },
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_3"
+                        }
+                    ],
+                    "join_table": [
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_4"
+                        },
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_5"
+                        }
+                    ],
+                    "target_columns": [
+                        "col_1",
+                        "col_2",
+                        "col_3",
+                        "col_4",
+                        "col_5",
+                        "col_6"
+                    ],
+                    "procedure": "mytestprocedure"
+                },
+                {
+                    "operation": "INSERT",
+                    "target_table": {
+                        "schema": "default_schema",
+                        "name": "test_table_2"
+                    },
+                    "from_table": [
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_6"
+                        }
+                    ],
+                    "join_table": [
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_7"
+                        }
+                    ],
+                    "target_columns": [
+                        "col_1",
+                        "col_2",
+                        "col_3",
+                        "col_4",
+                        "col_5",
+                        "col_6"
+                    ],
+                    "procedure": "mytestprocedure"
+                },
+                {
+                    "operation": "INSERT",
+                    "target_table": {
+                        "schema": "default_schema",
+                        "name": "test_table_7"
+                    },
+                    "from_table": [
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_8"
+                        }
+                    ],
+                    "join_table": [
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_9"
+                        }
+                    ],
+                    "target_columns": [
+                        "col_1",
+                        "col_2",
+                        "col_3",
+                        "col_4",
+                        "col_5",
+                        "col_6"
+                    ],
+                    "procedure": "mytestprocedure"
+                },
+                {
+                    "operation": "INSERT",
+                    "target_table": {
+                        "schema": "default_schema",
+                        "name": "test_table_10"
+                    },
+                    "from_table": [
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_11"
+                        }
+                    ],
+                    "join_table": [
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_12"
+                        }
+                    ],
+                    "target_columns": [
+                        "col_1",
+                        "col_2",
+                        "col_3",
+                        "col_4",
+                        "col_5",
+                        "col_6"
+                    ],
+                    "procedure": "mytestprocedure"
+                }
+            ]
+        }
+]
+
+SIMPLE_FILTER_EXPECTED = [{
+            "schema": "dwh",
+            "name": "mytestprocedure",
+            "path": "my/test/path.sql",
+            "statements": [
+                {
+                    "operation": "INSERT",
+                    "target_table": {
+                        "schema": "default_schema",
+                        "name": "test_table_1"
+                    },
+                    "from_table": [
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_2"
+                        },
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_3"
+                        }
+                    ],
+                    "join_table": [
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_4"
+                        },
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_5"
+                        }
+                    ],
+                    "target_columns": [
+                        "col_1",
+                        "col_2",
+                        "col_3",
+                        "col_4",
+                        "col_5",
+                        "col_6"
+                    ],
+                    "procedure": "mytestprocedure"
+                }
+            ]
+        }
+]
+
+RECURSIVE_FILTER_EXPECTED = [{
+            "schema": "dwh",
+            "name": "mytestprocedure",
+            "path": "my/test/path.sql",
+            "statements": [
+                {
+                    "operation": "INSERT",
+                    "target_table": {
+                        "schema": "default_schema",
+                        "name": "test_table_1"
+                    },
+                    "from_table": [
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_2"
+                        },
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_3"
+                        }
+                    ],
+                    "join_table": [
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_4"
+                        },
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_5"
+                        }
+                    ],
+                    "target_columns": [
+                        "col_1",
+                        "col_2",
+                        "col_3",
+                        "col_4",
+                        "col_5",
+                        "col_6"
+                    ],
+                    "procedure": "mytestprocedure"
+                },
+                {
+                    "operation": "INSERT",
+                    "target_table": {
+                        "schema": "default_schema",
+                        "name": "test_table_2"
+                    },
+                    "from_table": [
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_6"
+                        }
+                    ],
+                    "join_table": [
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_7"
+                        }
+                    ],
+                    "target_columns": [
+                        "col_1",
+                        "col_2",
+                        "col_3",
+                        "col_4",
+                        "col_5",
+                        "col_6"
+                    ],
+                    "procedure": "mytestprocedure"
+                },
+                {
+                    "operation": "INSERT",
+                    "target_table": {
+                        "schema": "default_schema",
+                        "name": "test_table_7"
+                    },
+                    "from_table": [
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_8"
+                        }
+                    ],
+                    "join_table": [
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_9"
+                        }
+                    ],
+                    "target_columns": [
+                        "col_1",
+                        "col_2",
+                        "col_3",
+                        "col_4",
+                        "col_5",
+                        "col_6"
+                    ],
+                    "procedure": "mytestprocedure"
+                }
+            ]
+        }
+]
+
+OUTPUT_TEST_INPUT = [{
+            "schema": "dwh",
+            "name": "mytestprocedure",
+            "path": "my/test/path.sql",
+            "statements": [
+                {
+                    "operation": "INSERT",
+                    "target_table": {
+                        "schema": "default_schema",
+                        "name": "test_table_1"
+                    },
+                    "from_table": [
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_2"
+                        },
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_3"
+                        }
+                    ],
+                    "join_table": [
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_4"
+                        },
+                        {
+                            "schema": "default_schema",
+                            "name": "test_table_5"
+                        }
+                    ],
+                    "target_columns": [
+                        "col_1",
+                        "col_2",
+                        "col_3",
+                        "col_4",
+                        "col_5",
+                        "col_6"
+                    ],
+                    "procedure": "mytestprocedure"
+                }
+            ]
+        }]
+
+JSON_OUTPUT_EXPECTED = {"my/test/path.sql": OUTPUT_TEST_INPUT}
+
+with open(f'./tests/_resources/output/mermaid.html', 'r') as template:
+    MERMAID_EXPECTED = BeautifulSoup(template.read(), features="html.parser")

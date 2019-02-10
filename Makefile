@@ -10,6 +10,9 @@ venv/bin/activate: requirements.txt
 output_test: venv
 	venv/bin/py.test -vvvv -r sxX tests/unit/test_output.py
 
+filter_test: venv
+	venv/bin/py.test -vvvv -r sxX tests/unit/test_filter.py
+
 unit_test: venv
 	venv/bin/py.test -vvvv -r sxX tests/unit
 
