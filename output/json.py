@@ -1,8 +1,8 @@
 import ujson
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 
-def to_json(results: List[Dict], path: str) -> None:
+def to_json(results: List[Dict], path: Optional[str]) -> Dict:
 
     """
     Transform and save results as .json file.
@@ -16,5 +16,8 @@ def to_json(results: List[Dict], path: str) -> None:
     for x in results:
         output[x['path']].append(x)
 
-    with open(path, 'w') as file:
-        ujson.dump(output, file, indent=4)
+    if path:
+        with open(path, 'w') as file:
+            ujson.dump(output, file, indent=4)
+
+    return output
