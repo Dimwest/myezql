@@ -1,4 +1,5 @@
 import pytest
+from typing import Pattern, List
 from parse.regex import *
 from tests.utils import *
 
@@ -20,7 +21,14 @@ with open('./tests/_resources/expected/procedure_expected.sql', 'r') as file:
      (TEST_TRUNCATE_STATEMENT, truncate_regex(';'), [TEST_TRUNCATE_STATEMENT]),
      (TEST_PROCEDURE, procedure_regex(';;'), [TEST_PROCEDURE_EXPECTED])]
 )
-def test_regex(statement, regex_function, expected):
+def test_regex(statement: str, regex_function: Pattern, expected: List[str]):
+    """
+    Ensure that regex findall() is returning the expected result
+
+    :param statement: statement string to apply regex on
+    :param regex_function: compiled regex pattern
+    :param expected: expected list of strings extracted
+    """
 
     result = re.findall(regex_function, statement)
     assert result == expected

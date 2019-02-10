@@ -5,6 +5,12 @@ from copy import deepcopy
 
 
 def test_simple_filter():
+
+    """
+    Ensure that simple filter works as expected, keeping only direct parents/children of
+    the selected table(s).
+    """
+
     p = Worker(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE, None)
     p.results = deepcopy(FILTER_TEST_INPUT)
     p.simple_filter([{'schema': 'default_schema', 'name': 'test_table_1'}])
@@ -12,6 +18,12 @@ def test_simple_filter():
 
 
 def test_recursive_filter():
+
+    """
+    Ensure that recursive filter works as expected, getting all indirect parents/children
+    of the selected table(s)
+    """
+
     p = Worker(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE, None)
     p.results = deepcopy(FILTER_TEST_INPUT)
     p.recursive_filter([{'schema': 'default_schema', 'name': 'test_table_1'}])
