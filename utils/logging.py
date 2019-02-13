@@ -1,33 +1,32 @@
 import logging
-from typing import Callable
-from time import time
 import sys
 
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
+handler.setLevel(logging.INFO)
 logger.addHandler(handler)
 
 
-def with_logging(func: Callable) -> Callable:
+def set_verbosity(v: str):
 
     """
-    Decorator used to for main function logging
-    :param func: target function
+    Modifies verbosity of logger stream handler.
+    :param v: verbosity level, one of: v, vv, vvv, vvvv
+
+    :return: updated logger
     """
-    def wrapper(*args, **kwargs):
 
-        logger.info(f'Running: {func.__name__}')
-        ts = time()
-        try:
-            result = func(*args, **kwargs)
-        except Exception as e:
-            logger.error(f'Error during execution of {func.__name__}:\n\n{type(e)}\n{e}')
-            return
-        te = time()
-        logger.info(f'Completed: {func.__name__}' + f' in {te-ts:.3f} sec')
-        return result
+    if v:
 
-    return wrapper
+        levels = {
+            'v': logging.ERROR,
+            'vv': logging.WARN,
+            'vvv': logging.INFO,
+            'vvvv': logging.DEBUG,
+        }
+
+        logger.removeHandler(handler)
+        new_handler = logging.StreamHandler(sys.stdout)
+        new_handler.setLevel(levels[v])
+        logger.addHandler(new_handler)
+        logger.warning(f"\nVerbosity level set on {levels[v]}")

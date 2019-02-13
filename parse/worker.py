@@ -22,8 +22,11 @@ class Worker:
     def __init__(self, default_schema: str, delimiter: str, pmode: str, fmode: str) -> None:
 
         self.results = []
+
         self.empty_procedures = []
         self.invalid_statements = []
+        self.errored_files = []
+
         self.delimiter = delimiter
         self.proc_regex = procedure_regex(self.delimiter)
         self.default_schema = default_schema
@@ -39,6 +42,22 @@ class Worker:
 
         self.remove_invalid_objects()
 
+    def execution_warnings(self) -> None:
+
+        if self.errored_files:
+            logger.warning(f"\n{Fore.RED}WARNING: error(s) occured while parsing "
+                           f"the following files: {self.errored_files}{Style.RESET_ALL}")
+
+        if self.empty_procedures:
+            logger.warning(f"\n{Fore.RED}WARNING: following procedures "
+                           f"had no statements and were deleted from results: "
+                           f"{self.empty_procedures}{Style.RESET_ALL}")
+
+        if self.invalid_statements:
+            logger.warning(f"\n{Fore.RED}WARNING: following statements were "
+                           f"found invalid and were deleted from results: "
+                           f"{self.invalid_statements}{Style.RESET_ALL}")
+
     def remove_invalid_objects(self):
 
         """
@@ -48,13 +67,13 @@ class Worker:
 
         self.empty_procedures = [p['name'] for p in self.results if not p['statements']]
         self.results = [p for p in self.results if p['statements']]
-        logger.info(f"Removed {len(self.empty_procedures)} empty procedures from results: {self.empty_procedures}")
+        logger.info(f"\nRemoved {len(self.empty_procedures)} empty procedures from results: {self.empty_procedures}")
 
         for p in self.results:
             self.invalid_statements.extend([x for x in p['statements'] if any(x[k] is None for k in x.keys())])
             p['statements'] = [x for x in p['statements'] if not any(x[k] is None for k in x.keys())]
 
-        logger.info(f"{len(self.invalid_statements)} invalid statements removed from results")
+        logger.info(f"\nRemoved {len(self.invalid_statements)} invalid statements from results")
 
     def parse_dir(self, dir_path: str) -> None:
 
@@ -89,34 +108,39 @@ class Worker:
 
         with open(path, 'r') as file:
 
-            logger.info(f'{Fore.LIGHTYELLOW_EX}Parsing {path} ...{Style.RESET_ALL}')
+            logger.warning(f'\n{Fore.LIGHTYELLOW_EX}Parsing {path} ...{Style.RESET_ALL}')
 
-            # Grammar is case-sensitive. Input has to be converted
-            # to upper case before parsing
-            file_input = fmt(file.read().upper().replace('`', ''), strip_comments=True).strip()
+            try:
 
-            # Parsing modes switch
-            if self.pmode == 'procedure':
-                procedures = re.findall(self.proc_regex, file_input)
-                for proc in procedures:
-                    results.append(self.parse_str(path, proc))
-            elif self.pmode == 'ddl':
-                results.append(self.parse_str(path, file_input))
+                # Grammar is case-sensitive. Input has to be converted
+                # to upper case before parsing
+                file_input = fmt(file.read().upper().replace('`', ''), strip_comments=True).strip()
 
-            logger.info(f'{Fore.GREEN}Successfully parsed {path}{Style.RESET_ALL}')
+                # Parsing modes switch
+                if self.pmode == 'procedure':
+                    procedures = re.findall(self.proc_regex, file_input)
+                    for proc in procedures:
+                        results.append(self.parse_str(path, proc))
+                elif self.pmode == 'ddl':
+                    results.append(self.parse_str(path, file_input))
+
+                logger.warning(f'\n{Fore.GREEN}Successfully parsed {path}{Style.RESET_ALL}')
+
+            except Exception as e:
+                logger.error(f'\n{Fore.RED}Error while parsing {path}{Style.RESET_ALL}')
+                self.errored_files.append(path)
 
         return results
 
     def parse_str(self, path: str, p: str) -> Dict:
 
         """
-        Gets all configured DDL statements inside a procedure body,
-        parses them, stores results in Procedure objects, and appends
+        Gets all configured DDL statements inside a procedure/file,
+        parses them, stores results in dictionary objects, and appends
         these objects to self.results.
 
-        :param path: the procedure path is passed here as the Procedure
-        instantiation requires it.
-        :param p: procedure body string
+        :param path: file/procedure path
+        :param p: file/procedure body string
         :param pmode: parsing mode, can be "procedure" or "ddl"
         """
 
@@ -134,6 +158,7 @@ class Worker:
 
         for ddl_type in mapper.extract_regexes.keys():
             statements = re.findall(mapper.extract_regexes[ddl_type], p)
+            logger.info(f"\n{len(statements)} {ddl_type} statements found in {name}")
             for s in statements:
                 q = self.parse_statement(ddl_type, s, mapper)
                 if q:
@@ -193,8 +218,11 @@ class Worker:
         mapper.parser = parser
         mapper.map_methods(self)
         tree = mapper.mapper[ddl_type]['parsermethod']()
-        r = mapper.mapper[ddl_type]['extractor'](tree, ddl_type)
-        return r
+        statement = mapper.mapper[ddl_type]['extractor'](tree, ddl_type)
+
+        logger.info(f"\nExtracted: {statement}")
+
+        return statement
 
     def get_updated_columns(self, tree: ParserRuleContext) -> List[str]:
 
@@ -516,9 +544,15 @@ class Worker:
         :param procedures: list of procedure names
         """
 
+        logger.info(f"\nResults before procedure filtering "
+                    f"on {procedures}:\n{self.results}")
+
         self.results = [x for x in self.results if any(p['schema'] == x['schema']
                                                        and p['name'] == x['name']
                                                        for p in procedures)]
+
+        logger.info(f"\nResults after procedure filtering "
+                    f"on {procedures}:\n{self.results}")
 
     def tables_filter(self, tables: List[Dict]) -> None:
 
@@ -530,10 +564,16 @@ class Worker:
         :param tables: list of tables to filter on
         """
 
+        logger.info(f"Results before {self.fmode} tables filtering "
+                    f"on {tables}:\n{self.results}")
+
         if self.fmode == 'simple':
             self.simple_filter(tables)
         elif self.fmode == 'rec':
             self.recursive_filter(tables)
+
+        logger.info(f"Results after {self.fmode} tables filtering "
+                    f"on {tables}:\n{self.results}")
 
     def simple_filter(self, tables: List[Dict]) -> None:
 

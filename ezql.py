@@ -13,12 +13,11 @@ from pathlib import Path
 
 class MyEzQl(object):
 
-    @with_logging
     def parse(self, i: str, ds: Optional[str]=None, dl: Optional[str]=None,
               pmode: Optional[str]=None, chart: Optional[str]=None,
               json: Optional[str]=None, tables: Optional[List[str]]=None,
               procedures: Optional[List[str]]=None,
-              fmode: Optional[str]=None) -> None:
+              fmode: Optional[str]=None, v: Optional[str]=None) -> None:
 
         """
         Core function parsing input file or directory and pretty-printing results
@@ -48,6 +47,10 @@ class MyEzQl(object):
         in outputs. Procedures filtering has precedence over tables filtering.
 
         :param fmode: filtering mode, can be 'simple' or 'rec'
+
+        :param v: verbosity level, which will ultimately set the DEBUG output level.
+        Must be one of ('v', 'vv', 'vvv', 'vvvv'), defaults to None, resulting in
+        logging.INFO logger level
         """
 
         # Read config
@@ -63,16 +66,19 @@ class MyEzQl(object):
         # Set parsing mode to config value if not provided
         pmode = cfg['parser_config']['default_parsing_mode'] if not pmode else pmode
         fmode = cfg['parser_config']['default_filter_mode'] if not fmode else fmode
+        v = cfg['parser_config']['default_verbosity'] if not v else v
 
-        validate_args(i, chart, json, tables, procedures, pmode, fmode)
+        validate_args(i, chart, json, tables, procedures, pmode, fmode, v)
 
-        logger.info(f'\n\nStart parsing with parameters:'
-                    f'\n\n  default schema --> {ds}'
-                    f'\n  delimiter      --> {dl}'
-                    f'\n  parsing mode   --> {pmode}'
-                    f"\n  filter mode    --> {fmode if tables or procedures else 'off'} "
-                    f"\n{'    -> on procedure(s) ' + str(procedures) if procedures else ''}"
-                    f"\n{'    -> on table(s) ' + str(tables) if tables else ''}\n")
+        set_verbosity(v)
+
+        logger.warning(f'\nStart parsing with parameters:'
+                       f'\n\n  default schema --> {ds}'
+                       f'\n  delimiter      --> {dl}'
+                       f'\n  parsing mode   --> {pmode}'
+                       f"\n  filter mode    --> {fmode if tables or procedures else 'off'} "
+                       f"\n{'    -> on procedure(s) ' + str(procedures) if procedures else ''}"
+                       f"\n{'    -> on table(s) ' + str(tables) if tables else ''}")
 
         # Configure and run parser
         worker = Worker(default_schema=ds, delimiter=dl, pmode=pmode, fmode=fmode)
@@ -91,15 +97,16 @@ class MyEzQl(object):
         # Pretty print results in terminal
         beautify(worker.results)
 
+        # Print errored files if existing
+        worker.execution_warnings()
+
         # If .html flowchart output required, create it
         if chart:
             m = Mermaid(worker.results)
             m.tables_chart(chart)
-            logger.info(f'{chart} successfully saved')
 
         if json:
             to_json(worker.results, json)
-            logger.info(f'{json} successfully saved')
 
 
 if __name__ == '__main__':

@@ -1,5 +1,6 @@
 from colorama import Fore, Style
 from typing import List, Dict
+import sys
 
 
 def beautify(results: List[Dict]) -> None:
@@ -11,13 +12,14 @@ def beautify(results: List[Dict]) -> None:
     :return: None, only displays the results
     """
 
-    msg = f'\n'
+    msg = f''
 
     for p in results:
 
-        msg += f'\n\n{Fore.GREEN}----------------------------\n'
-        msg += f"{Fore.GREEN}{p['schema']}.{p['name']} ({p['path']})\n"
-        msg += f'{Fore.GREEN}----------------------------\n{Style.RESET_ALL}'
+        title_len = len(f"| {p['schema']}.{p['name']} ({p['path']} |") + 1
+        msg += f'\n{Fore.GREEN}{"".join(["-" for x in range(title_len)])}\n'
+        msg += f"{Fore.GREEN}| {p['schema']}.{p['name']} ({p['path']}) |\n"
+        msg += f'{Fore.GREEN}{"".join(["-" for x in range(title_len)])}\n{Style.RESET_ALL}'
         for q in p['statements']:
             msg += f"|\n|--- {Fore.BLUE}{q['operation']}{Style.RESET_ALL} " \
                    f"----> {Fore.CYAN}{q['target_table']['schema']}.{q['target_table']['name']}\n{Style.RESET_ALL}"

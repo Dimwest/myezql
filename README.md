@@ -154,10 +154,11 @@ difficult to read through.
 - [x] Introduce end-to-end testing of processing
 - [x] Add unit tests
 
-#### Tool functionalities:
+#### Tool features:
 - [ ] Add aliases support
 - [ ] Add column inheritance analysis (requires aliases support)
-- [ ] Improve logging, introduce verbose arg
+- [x] Improve logging, introduce verbosity arg
+- [x] Add procedures' filtering
 - [x] Analysis features: table/function childs, parents, etc.
 - [x] Improve arguments validation
 - [x] Add proper config file

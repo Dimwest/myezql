@@ -5,7 +5,7 @@ from utils.paths import is_path_creatable, is_pathname_valid
 
 def validate_args(i: str, chart: str, json: str, tables: Optional[List[str]],
                   procedures: Optional[str], pmode: Optional[str],
-                  fmode: Optional[str]) -> None:
+                  fmode: Optional[str], v: Optional[str]) -> None:
 
     """
     Validate all CLI arguments before execution, raise clear exceptions if
@@ -15,9 +15,10 @@ def validate_args(i: str, chart: str, json: str, tables: Optional[List[str]],
     :param chart: output html flowchart path
     :param json: output json file path
     :param tables: list of table names, defaults to None
-    :param tables: list of procedure names, defaults to None
+    :param procedures: list of procedure names, defaults to None
     :param pmode: parsing mode, defaults to None
     :param fmode: filter mode, defaults to None
+    :param fmode: verbosity level, defaults to None
     """
 
     validate_input_path(i)
@@ -27,6 +28,7 @@ def validate_args(i: str, chart: str, json: str, tables: Optional[List[str]],
     validate_sql_object_names(procedures)
     validate_parsing_mode(pmode)
     validate_filter_mode(fmode)
+    validate_verbosity(v)
 
 
 def validate_output_path(path: str, fmt: str) -> None:
@@ -109,3 +111,19 @@ def validate_filter_mode(fmode: Optional[str]) -> None:
         if fmode not in ('simple', 'rec'):
             raise ValueError(f'Filter mode must be one of the following values: '
                              f'{supported_modes}')
+
+
+def validate_verbosity(v: Optional[str]) -> None:
+
+    """
+    Ensures verbosity has one of accepted values.
+
+    :param v: verbosity level, None if not set by user
+    """
+
+    valid_levels = ('v', 'vv', 'vvv', 'vvvv')
+
+    if v:
+        if v not in valid_levels:
+            raise ValueError(f'Verbosity level must one of the following values: '
+                             f'{valid_levels}')
