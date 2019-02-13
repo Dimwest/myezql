@@ -1,21 +1,22 @@
 from typing import List, Dict
 
 
-def names_to_tables(tables: List[str]) -> List[Dict]:
+def str_to_sql_dict(tables: List[str]) -> List[Dict]:
 
     """
-    Transform a list of table names into a list of dictionaries with keys schema and name
+    Transforms a list of tables/procedures names into a list of dictionaries with keys schema and name
+
     :param tables: list ot table names
     :return: list of table dictionaries
     """
 
-    return [dict(zip(['schema', 'name'], t.split('.'))) for t in tables]
+    return [dict(zip(['schema', 'name'], t.lower().split('.'))) for t in tables]
 
 
 def flatten(l: List[List[Dict]]) -> List[Dict]:
 
     """
-    Flattens list of lists containing table dictionaries.
+    Flattens list of lists.
 
     :param l: list containing lists of table dictionaries
     :return: list containing table dictionaries

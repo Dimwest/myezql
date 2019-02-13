@@ -507,11 +507,25 @@ class Worker:
                 tables.extend(self.get_tables_names(c))
         return tables
 
+    def procedures_filter(self, procedures: List[Dict]) -> None:
+
+        """
+        Filters results to keep only procedures names given in list argument.
+        Has precedence on tables_filter function at runtime.
+
+        :param procedures: list of procedure names
+        """
+
+        self.results = [x for x in self.results if any(p['schema'] == x['schema']
+                                                       and p['name'] == x['name']
+                                                       for p in procedures)]
+
     def tables_filter(self, tables: List[Dict]) -> None:
 
         """
         Filters statements based on list of tables and filtering mode set for
-        the worker.
+        the worker. Function procedures_filter precedence on tables_filter
+        function at runtime.
 
         :param tables: list of tables to filter on
         """

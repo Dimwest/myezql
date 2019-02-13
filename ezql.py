@@ -1,6 +1,6 @@
 import fire
 from configparser import ConfigParser
-from utils.processing import names_to_tables
+from utils.processing import str_to_sql_dict
 from utils.validation import *
 from utils.logging import *
 from parse.worker import Worker
@@ -16,7 +16,8 @@ class MyEzQl(object):
     @with_logging
     def parse(self, i: str, ds: Optional[str]=None, dl: Optional[str]=None,
               pmode: Optional[str]=None, chart: Optional[str]=None,
-              json: Optional[str]=None, tables: Optional[List[str]]= None,
+              json: Optional[str]=None, tables: Optional[List[str]]=None,
+              procedures: Optional[List[str]]=None,
               fmode: Optional[str]=None) -> None:
 
         """
@@ -38,8 +39,13 @@ class MyEzQl(object):
         :param json: path to output .json file, defaults to '', in which case
         no output file is created
 
-        :param tables: list of table names to focus on in the analysis, only the parents
-        and children of these tables will be kept in the outputs
+        :param tables: list of table names to filter on, only the parents
+        and children of these table(s) will be kept in the outputs.
+        Procedures filtering has precedence over tables filtering.
+
+        :param procedures: list of procedure names to filter on, only the
+        statements located inside the selected procedure(s) will be kept
+        in outputs. Procedures filtering has precedence over tables filtering.
 
         :param fmode: filtering mode, can be 'simple' or 'rec'
         """
@@ -58,24 +64,31 @@ class MyEzQl(object):
         pmode = cfg['parser_config']['default_parsing_mode'] if not pmode else pmode
         fmode = cfg['parser_config']['default_filter_mode'] if not fmode else fmode
 
-        validate_args(i, chart, json, tables, pmode, fmode)
+        validate_args(i, chart, json, tables, procedures, pmode, fmode)
 
         logger.info(f'\n\nStart parsing with parameters:'
                     f'\n\n  default schema --> {ds}'
                     f'\n  delimiter      --> {dl}'
                     f'\n  parsing mode   --> {pmode}'
-                    f"\n  filter mode    --> {fmode if tables else 'off'} {'on ' + str(tables) if tables else ''}\n")
+                    f"\n  filter mode    --> {fmode if tables or procedures else 'off'} "
+                    f"\n{'    -> on procedure(s) ' + str(procedures) if procedures else ''}"
+                    f"\n{'    -> on table(s) ' + str(tables) if tables else ''}\n")
 
         # Configure and run parser
         worker = Worker(default_schema=ds, delimiter=dl, pmode=pmode, fmode=fmode)
         worker.run(i)
 
+        # If procedure filter defined, apply filtering to results
+        if procedures:
+            procedures = str_to_sql_dict(procedures)
+            worker.procedures_filter(procedures)
+
         # If tables filter defined, apply filtering to results
         if tables:
-            tables = names_to_tables(tables)
+            tables = str_to_sql_dict(tables)
             worker.tables_filter(tables)
 
-        # Pretty print results
+        # Pretty print results in terminal
         beautify(worker.results)
 
         # If .html flowchart output required, create it
