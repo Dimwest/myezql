@@ -1,6 +1,8 @@
 from typing import List, Dict, Optional
 from bs4 import BeautifulSoup
 from pathlib import Path
+from utils.logging import logger
+from colorama import Fore, Style
 
 data_flow_ops = ['INSERT', 'REPLACE', 'UPDATE', 'CREATE TABLE QUERY']
 
@@ -48,28 +50,35 @@ class Mermaid:
         :param path: output HTML file destination
         """
 
-        # Creating mermaid markdown arrows' list
-        for p in self.input:
-            # For all statements in parsed procedure/file
-            for s in p['statements']:
-                if s['operation'] in data_flow_ops:
-                    self.arrow(s, 'from_table')
-                    self.arrow(s, 'join_table')
+        try:
 
-        # Generate markdown string from the list of arrows
-        self.tables_flow.insert(0, self.graph_type)
-        self.output = '\n'.join(self.tables_flow)
+            # Creating mermaid markdown arrows' list
+            for p in self.input:
+                # For all statements in parsed procedure/file
+                for s in p['statements']:
+                    if s['operation'] in data_flow_ops:
+                        self.arrow(s, 'from_table')
+                        self.arrow(s, 'join_table')
 
-        # Update <div class="mermaid"> in HTML template code with our Mermaid markdown
-        mermaid = self.soup.find("div", {"class": "mermaid"})
-        chart = self.soup.new_tag("div")
-        chart.attrs["class"] = "mermaid"
-        chart.string = self.output
-        mermaid.replace_with(chart)
+            # Generate markdown string from the list of arrows
+            self.tables_flow.insert(0, self.graph_type)
+            self.output = '\n'.join(self.tables_flow)
 
-        if path:
-            # Save HTML file at specified path
-            with open(path, 'w') as outfile:
-                outfile.write(str(self.soup))
+            # Update <div class="mermaid"> in HTML template code with our Mermaid markdown
+            mermaid = self.soup.find("div", {"class": "mermaid"})
+            chart = self.soup.new_tag("div")
+            chart.attrs["class"] = "mermaid"
+            chart.string = self.output
+            mermaid.replace_with(chart)
+
+            if path:
+                # Save HTML file at specified path
+                with open(path, 'w') as outfile:
+                    outfile.write(str(self.soup))
+
+            print(f'{Fore.GREEN}{path} successfully saved{Style.RESET_ALL}')
+
+        except Exception as e:
+            logger.error(f'{Fore.RED}Could not save HTML chart at {path}{Style.RESET_ALL}')
 
         return self.soup

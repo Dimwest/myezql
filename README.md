@@ -29,7 +29,7 @@ alias myezql="source /path/to/MyEzQL/venv/bin/activate && python3 /path/to/MyEzQ
 
 Don't forget to deactivate the virtual environment when you're done ;)
 
-### Basic functionalities
+### Basic settings
 
 Read from any SQL file or directory containing SQL files.
 
@@ -52,7 +52,7 @@ python3 ezql.py parse --i /my/path.sql --pmode ddl
 ```
 
 Statement delimiter can be specified using the --dl flag.
-If not specified as command line argument, the delimiter will have the value defined in config/config.py.
+If not specified as command line argument, the delimiter will have the value defined in config.ini.
 If the --pmode flag is set to True, this delimiter is used for finding Create Procedure statements only, 
 and it is assumed that individual DDL statements inside of the procedure use ';' as delimiter.
 ```bash
@@ -60,12 +60,18 @@ python3 ezql.py parse --i /my/path.sql --dl ';;'
 ```
 
 A default schema can be specified using the --ds flag.
-If not specified as command line argument, the default schema will have the value defined in config/config.py
+If not specified as command line argument, the default schema will have the value defined in config.ini.
 ```bash
 python3 ezql.py parse --i /my/path.sql --ds default
 ```
 
-### Advanced functionalities
+Verbosity level can be adjusted using the --v flag.
+If not specified as command line argument, the default schema will have the value defined in config.ini.
+Accepted values are: v, vv, vvv, vvvv.
+
+```bash
+python3 ezql.py parse --i /my/path.sql --v vv
+```
 
 #### Save results as HTML flowcharts or JSON files
 
@@ -82,7 +88,9 @@ Here is sample output HTML file:
 
 Parsing of large amount of SQL code can result in large, entangled flowcharts which
 results can be difficult to interpret. You may also want to focus your analysis
-on one (or several) tables.
+on one (or several) tables/procedures.
+
+##### Tables filter
 
 Results can be filtered on a list of specific tables using the --tables flag.
 All tables in the list must specify a schema name.
@@ -92,7 +100,7 @@ python3 ezql.py parse --i /my/path.sql --tables "['schema.tab_name']"
 NB: depending on the shell you're using, you might need to escape the argument list differently, or not at all.
 This example works with zsh.
 
-Filtering mode can be set using the --fmode flag. As of now, two modes are supported.
+Tables filtering mode can be set using the --fmode flag. As of now, two modes are supported.
 
 - Simple filtering will keep only the statements containing direct parents and children of the selected table(s)
 
@@ -105,6 +113,17 @@ python3 ezql.py parse --i /my/path.sql --tables "['schema.tab_name']" --fmode si
 ```bash
 python3 ezql.py parse --i /my/path.sql --tables "['schema.tab_name']" --fmode rec
 ```
+
+##### Procedures filter
+
+Results can be filtered on a list of specific procedures using the --procedures flag.
+All procedures in the list must specify a schema name. 
+
+```bash
+python3 ezql.py parse --i /my/path.sql --procedures "['schema.proc_name']"
+```
+
+Procedures filtering only has "simple" mode, hence the --fmode flag will not apply to this filter.
 
 ## Good to know
 
@@ -134,7 +153,6 @@ difficult to read through.
 - [x] Create table columns
 - [x] Create table as
 
-
 #### Refactoring / documenting:
 - [x] Add install documentation
 - [x] Refactor output functions
@@ -143,9 +161,9 @@ difficult to read through.
 - [x] Add type hints
 
 #### Tests / build:
-- [ ] Write tests for filter functions
 - [ ] Write tests proving unsupported cases (e.g. SQL keywords in aliases, etc.)
 - [ ] Add test coverage report
+- [x] Write tests for filter functions
 - [x] Test on larger scale with 90 available procedure files
 - [x] Write tests for output functions
 - [x] Add Travis CI setup
@@ -154,10 +172,12 @@ difficult to read through.
 - [x] Introduce end-to-end testing of processing
 - [x] Add unit tests
 
-#### Tool functionalities:
+#### Tool features:
 - [ ] Add aliases support
-- [ ] Add column inheritance analysis (requires aliases support)
-- [ ] Improve logging, introduce verbose arg
+- [ ] Add column parents analysis (requires aliases support)
+- [ ] Package / pip3 install
+- [x] Improve logging, introduce verbosity arg
+- [x] Add procedures' filtering
 - [x] Analysis features: table/function childs, parents, etc.
 - [x] Improve arguments validation
 - [x] Add proper config file

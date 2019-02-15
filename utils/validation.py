@@ -4,7 +4,8 @@ from utils.paths import is_path_creatable, is_pathname_valid
 
 
 def validate_args(i: str, chart: str, json: str, tables: Optional[List[str]],
-                  pmode: Optional[str], fmode: Optional[str]) -> None:
+                  procedures: Optional[str], pmode: Optional[str],
+                  fmode: Optional[str], v: Optional[str]) -> None:
 
     """
     Validate all CLI arguments before execution, raise clear exceptions if
@@ -14,16 +15,20 @@ def validate_args(i: str, chart: str, json: str, tables: Optional[List[str]],
     :param chart: output html flowchart path
     :param json: output json file path
     :param tables: list of table names, defaults to None
+    :param procedures: list of procedure names, defaults to None
     :param pmode: parsing mode, defaults to None
     :param fmode: filter mode, defaults to None
+    :param fmode: verbosity level, defaults to None
     """
 
     validate_input_path(i)
     validate_output_path(chart, 'html')
     validate_output_path(json, 'json')
-    validate_tables(tables)
+    validate_sql_object_names(tables)
+    validate_sql_object_names(procedures)
     validate_parsing_mode(pmode)
     validate_filter_mode(fmode)
+    validate_verbosity(v)
 
 
 def validate_output_path(path: str, fmt: str) -> None:
@@ -59,7 +64,7 @@ def validate_input_path(path: str) -> None:
         raise ValueError(f'{path} is not a valid directory or .sql file path')
 
 
-def validate_tables(tables: Optional[List[str]]) -> None:
+def validate_sql_object_names(tables: Optional[List[str]]) -> None:
 
     """
     Ensure list of tables has the format 'schema.name' and return a list
@@ -106,3 +111,19 @@ def validate_filter_mode(fmode: Optional[str]) -> None:
         if fmode not in ('simple', 'rec'):
             raise ValueError(f'Filter mode must be one of the following values: '
                              f'{supported_modes}')
+
+
+def validate_verbosity(v: Optional[str]) -> None:
+
+    """
+    Ensures verbosity has one of accepted values.
+
+    :param v: verbosity level, None if not set by user
+    """
+
+    valid_levels = ('v', 'vv', 'vvv', 'vvvv')
+
+    if v:
+        if v not in valid_levels:
+            raise ValueError(f'Verbosity level must one of the following values: '
+                             f'{valid_levels}')

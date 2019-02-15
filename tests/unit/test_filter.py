@@ -4,6 +4,28 @@ from tests.utils import TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE, \
 from copy import deepcopy
 
 
+def test_procedure_filter():
+
+    """
+    Ensure that procedure filter works as expected, keeping only procedures selected for
+    filtering.
+    """
+
+    p = Worker(TEST_DEFAULT_SCHEMA, TEST_DELIMITER, TEST_MODE, 'simple')
+    p.results = deepcopy(FILTER_TEST_INPUT)
+    p.procedures_filter([
+        {'schema': FILTER_TEST_INPUT[0]['schema'],
+         'name': FILTER_TEST_INPUT[0]['name']}
+    ])
+    assert p.results == FILTER_TEST_INPUT
+
+    p.procedures_filter([
+        {'schema': 'another_schema',
+         'name': 'another_name'}
+    ])
+    assert p.results == []
+
+
 def test_simple_filter():
 
     """
