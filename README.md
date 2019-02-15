@@ -60,18 +60,18 @@ python3 ezql.py parse --i /my/path.sql --dl ';;'
 ```
 
 A default schema can be specified using the --ds flag.
-If not specified as command line argument, the default schema will have the value defined in config.ini
+If not specified as command line argument, the default schema will have the value defined in config.ini.
 ```bash
 python3 ezql.py parse --i /my/path.sql --ds default
 ```
+
 Verbosity level can be adjusted using the --v flag.
-If not specified as command line argument, the default schema will have the value defined in config.ini
-will have the value defined in config.ini. Accepted values are: v, vv, vvv, vvvv
+If not specified as command line argument, the default schema will have the value defined in config.ini.
+Accepted values are: v, vv, vvv, vvvv.
 
 ```bash
 python3 ezql.py parse --i /my/path.sql --v vv
 ```
-
 
 #### Save results as HTML flowcharts or JSON files
 
@@ -153,7 +153,6 @@ difficult to read through.
 - [x] Create table columns
 - [x] Create table as
 
-
 #### Refactoring / documenting:
 - [x] Add install documentation
 - [x] Refactor output functions
@@ -175,7 +174,8 @@ difficult to read through.
 
 #### Tool features:
 - [ ] Add aliases support
-- [ ] Add column inheritance analysis (requires aliases support)
+- [ ] Add column parents analysis (requires aliases support)
+- [ ] Package / pip3 install
 - [x] Improve logging, introduce verbosity arg
 - [x] Add procedures' filtering
 - [x] Analysis features: table/function childs, parents, etc.
