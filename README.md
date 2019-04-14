@@ -1,8 +1,8 @@
-[![Build Status](https://travis-ci.com/Dimwest/MyEzQL.svg?branch=master)](https://travis-ci.com/Dimwest/MyEzQL)
+[![Build Status](https://travis-ci.com/Dimwest/myezql.svg?branch=master)](https://travis-ci.com/Dimwest/myezql)
 
-# MyEzQL
+# myezql
 
-MyEzQL is a Python CLI tool parsing SQL files and enabling easier visualization of data flows 
+myezql is a Python CLI tool parsing SQL files and enabling easier visualization of data flows 
 by pretty-printing parsing results and exporting them as HTML flowcharts.
 
 
@@ -15,8 +15,8 @@ It can easily be used with the following commands.
 
 ```bash
 cd my/target/directory
-git clone git@github.com:Dimwest/MyEzQL.git
-cd MyEzQL/
+git clone git@github.com:Dimwest/myezql.git
+cd myezql/
 make venv
 source venv/bin/activate
 ```
@@ -24,7 +24,7 @@ source venv/bin/activate
 Tip: As the only command used by the script is "parse", and the only required argument is the input path --i, you can set the following alias:
 
 ```bash
-alias myezql="source /path/to/MyEzQL/venv/bin/activate && python3 /path/to/MyEzQL/ezql.py parse --i"
+alias myezql="source /path/to/myezql/venv/bin/activate && python3 /path/to/myezql/ezql.py parse --i"
 ```
 
 Don't forget to deactivate the virtual environment when you're done ;)
